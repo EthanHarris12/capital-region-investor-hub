@@ -5,7 +5,7 @@ import React, { useState, useEffect } from "react";
 // ============================================
 // Zapier webhook URL: Create a Zap with "Webhooks by Zapier" trigger → paste URL here
 // The form will POST { name, email, phone, interests[], timestamp, source } to this URL
-const WEBHOOK_URL = ""; // e.g. "https://hooks.zapier.com/hooks/catch/XXXXX/XXXXX/"
+const WEBHOOK_URL = "https://hooks.zapier.com/hooks/catch/27086273/unvqjn8/"; // e.g. "https://hooks.zapier.com/hooks/catch/XXXXX/XXXXX/"
 
 // Persistent lead storage (works in artifact preview + deployed site)
 const STORAGE_KEY = "crih_lead";
