@@ -26,7 +26,7 @@ const sendToWebhook = async (lead) => {
   if (!WEBHOOK_URL) return;
   try {
     await fetch(WEBHOOK_URL, {
-      method: "POST", headers: { "Content-Type": "application/json" },
+      method: "POST", mode: "no-cors",
       body: JSON.stringify({ ...lead, interests: Array.isArray(lead.interests) ? lead.interests.join(", ") : lead.interests, timestamp: new Date().toISOString(), source: "Capital Region Investor Hub" })
     });
   } catch (e) { /* silent fail — don't block user experience */ }
