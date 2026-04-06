@@ -1,11 +1,11 @@
-import React, { useState, useEffect } from "react";
+import { useState, useEffect } from "react";
 
 // ============================================
 // CONFIG — Update these for your deployment
 // ============================================
 // Zapier webhook URL: Create a Zap with "Webhooks by Zapier" trigger → paste URL here
 // The form will POST { name, email, phone, interests[], timestamp, source } to this URL
-const WEBHOOK_URL = "https://hooks.zapier.com/hooks/catch/27086273/unvqjn8/"; // e.g. "https://hooks.zapier.com/hooks/catch/XXXXX/XXXXX/"
+const WEBHOOK_URL = ""; // e.g. "https://hooks.zapier.com/hooks/catch/XXXXX/XXXXX/"
 
 // Persistent lead storage (works in artifact preview + deployed site)
 const STORAGE_KEY = "crih_lead";
@@ -26,7 +26,7 @@ const sendToWebhook = async (lead) => {
   if (!WEBHOOK_URL) return;
   try {
     await fetch(WEBHOOK_URL, {
-      method: "POST", mode: "no-cors",
+      method: "POST", headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ ...lead, interests: Array.isArray(lead.interests) ? lead.interests.join(", ") : lead.interests, timestamp: new Date().toISOString(), source: "Capital Region Investor Hub" })
     });
   } catch (e) { /* silent fail — don't block user experience */ }
