@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from "react";
+import { useState, useEffect } from "react";
 
 // ============================================
 // CONFIG — Update these for your deployment
@@ -322,7 +322,7 @@ function DealAnalyzer() {
             {pH("5-Year Projection")}
             <div style={{ display: "grid", gridTemplateColumns: "36px 1fr 1fr 1fr", gap: "3px 10px", fontSize: 11 }}>
               <span style={{ color: B.grayMuted, fontWeight: 700 }}>Yr</span><span style={{ color: B.grayMuted, fontWeight: 700 }}>Value</span><span style={{ color: B.grayMuted, fontWeight: 700 }}>NOI</span><span style={{ color: B.grayMuted, fontWeight: 700 }}>Cashflow</span>
-              {proj.map(p => (<div key={p.y} style={{display:"contents"}}><span style={{ color: B.grayText }}>{p.y}</span><span style={{ color: B.white }}>{fmtC(p.v)}</span><span style={{ color: B.greenLight }}>{fmtC(p.n)}</span><span style={{ color: p.c >= 0 ? "#4ade80" : "#ef4444" }}>{fmtC(p.c)}</span></div>))}
+              {proj.map(p => (<React.Fragment key={p.y}><span style={{ color: B.grayText }}>{p.y}</span><span style={{ color: B.white }}>{fmtC(p.v)}</span><span style={{ color: B.greenLight }}>{fmtC(p.n)}</span><span style={{ color: p.c >= 0 ? "#4ade80" : "#ef4444" }}>{fmtC(p.c)}</span></React.Fragment>))}
             </div>
             <div style={{ fontSize: 9, color: B.grayMuted, marginTop: 6 }}>Assumes 4% appreciation, 3% rent growth</div>
           </div>
