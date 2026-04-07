@@ -453,7 +453,8 @@ export default function App() {
   const handleLeadSubmit = async (formData) => {
     setLead(formData);
     await saveLead(formData);
-    await sendToWebhook(formData);
+  await sendToWebhook(formData);
+    if (window.gtag) window.gtag('event', 'generate_lead', { event_category: 'engagement', event_label: Array.isArray(formData.interests) ? formData.interests.join(', ') : formData.interests });
   };
 
   if (loading) return (<div style={{ minHeight: "100vh", display: "flex", alignItems: "center", justifyContent: "center", background: `linear-gradient(170deg, ${B.navyDeep} 0%, ${B.navy} 40%, ${B.navyLight} 100%)`, fontFamily: "'DM Sans', sans-serif" }}><div style={{ color: B.grayMuted, fontSize: 14 }}>Loading...</div></div>);
