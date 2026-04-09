@@ -1,5 +1,4 @@
-/* eslint-disable react/jsx-no-undef */
-import React, { useState, useEffect } from "react";
+import { useState, useEffect } from "react";
 
 // ============================================
 // CONFIG — Update these for your deployment
