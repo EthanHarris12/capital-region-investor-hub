@@ -1092,7 +1092,6 @@ function PortfolioDashboard({ onTrack }) {
       setProperties(results[0]); setDeals(results[1]); setLoading(false);
       if (onTrack && (results[0].length > 0 || results[1].length > 0)) onTrack("portfolio_viewed", results[0].length + " properties, " + results[1].length + " deals");
     });
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   if (loading) return <div style={{ color: B.grayMuted, padding: 20 }}>Loading portfolio...</div>;
