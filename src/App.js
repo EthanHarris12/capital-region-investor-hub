@@ -448,11 +448,21 @@ function DealAnalyzer({ onTrack }) {
         ["---", "PROPERTY"], ["Address", d.address || "\u2014"], ["Units", d.units.toString()], ["Purchase Price", fmtD(d.purchasePrice)], ["Strategy", stratLabel],
         ["---", "FINANCING"], ["Down Payment", fmtD(dp) + " (" + d.downPct + "%)"], ["Loan Amount", fmtD(loan)], ["Rate / Term", d.rate + "% / " + d.term + " yr"], ["Monthly Mortgage", fmtD(mtg)],
         ["---", "INCOME"], ["Gross Revenue (Annual)", fmtD(gri)], ["Effective Gross Income", fmtD(egi)],
-        ["---", "EXPENSES"], ["Taxes + Insurance", fmtD(d.taxes + d.insurance)], ["Maintenance (" + d.maintenancePct + "%)", fmtD(maintenanceDollar)], ["CapEx (" + d.capexPct + "%)", fmtD(capexDollar)], ["Total Operating Expenses", fmtD(totExp)],
+        ["---", "EXPENSES (ANNUAL)"],
+        ["Taxes", fmtD(d.taxes)],
+        ["Insurance", fmtD(d.insurance)],
+        ["Maintenance (" + d.maintenancePct + "%)", fmtD(maintenanceDollar)],
+        ["CapEx (" + d.capexPct + "%)", fmtD(capexDollar)],
+      ];
+      if (d.management > 0) rows.push(["Management (" + d.management + "%)", fmtD(mgmtDollar)]);
+      if (d.utilities > 0) rows.push(["Utilities", fmtD(d.utilities * 12)]);
+      if (d.otherExp > 0) rows.push(["Other Expenses", fmtD(d.otherExp * 12)]);
+      rows.push(["Total Operating Expenses", fmtD(totExp)]);
+      rows.push(
         ["---", "RETURNS"], ["NOI", fmtD(noi), "green"], ["Annual Cashflow", fmtD(cf), cf >= 0 ? "green" : "red"], ["Cash Flow / Door / Mo", fmtD(cfDoor), cfDoor >= 100 ? "green" : "red"],
         ["Cap Rate", fmtP(cap), cap >= 7 ? "green" : undefined], ["Cash-on-Cash Return", fmtP(coc), coc >= 8 ? "green" : undefined], ["DSCR", (dscr === Infinity ? "\u221E" : dscr.toFixed(2) + "x"), dscr >= 1.25 ? "green" : dscr < 1 ? "red" : undefined], ["GRM", grm.toFixed(1) + "x"], ["Expense Ratio", fmtP(expR)],
         ["---", "CASH TO CLOSE"], ["Down Payment", fmtD(dp)], ["Closing Costs", fmtD(closingCosts)]
-      ];
+      );
       if (strategy !== "ltr") rows.push(["Furnishing", fmtD(furnishing)]);
       rows.push(["Total Cash Invested", fmtD(totalCashInvested), "green"]);
     }
@@ -1092,6 +1102,7 @@ function PortfolioDashboard({ onTrack }) {
       setProperties(results[0]); setDeals(results[1]); setLoading(false);
       if (onTrack && (results[0].length > 0 || results[1].length > 0)) onTrack("portfolio_viewed", results[0].length + " properties, " + results[1].length + " deals");
     });
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   if (loading) return <div style={{ color: B.grayMuted, padding: 20 }}>Loading portfolio...</div>;
