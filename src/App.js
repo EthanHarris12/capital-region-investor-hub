@@ -22,9 +22,23 @@ const loadLead = async () => {
 const sendToWebhook = async (lead) => {
   if (!WEBHOOK_URL) return;
   try {
+    var payload = {
+      name: lead.name || "",
+      email: lead.email || "",
+      phone: lead.phone || "",
+      interests: Array.isArray(lead.interests) ? lead.interests.join(", ") : (lead.interests || ""),
+      timestamp: new Date().toISOString(),
+      source: "Capital Region Investor Hub",
+      page_url: (typeof window !== "undefined" ? window.location.href : ""),
+      user_agent: (typeof navigator !== "undefined" ? navigator.userAgent : "")
+    };
+    var formBody = Object.keys(payload).map(function(k) {
+      return encodeURIComponent(k) + "=" + encodeURIComponent(payload[k]);
+    }).join("&");
     await fetch(WEBHOOK_URL, {
-      method: "POST", headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ ...lead, interests: Array.isArray(lead.interests) ? lead.interests.join(", ") : lead.interests, timestamp: new Date().toISOString(), source: "Capital Region Investor Hub" })
+      method: "POST",
+      headers: { "Content-Type": "application/x-www-form-urlencoded" },
+      body: formBody
     });
   } catch (e) { /* silent fail */ }
 };
@@ -97,13 +111,29 @@ const logActivity = async function(lead, action, detail) {
     else if (typeof localStorage !== "undefined") { localStorage.setItem(ACTIVITY_KEY, JSON.stringify(existing)); }
   } catch (e) { /* silent */ }
   // Fire webhook for high-intent actions
-  var highIntent = ["deal_saved", "equity_saved", "pdf_exported", "comparison_run", "portfolio_viewed", "town_compared"];
+  var highIntent = ["deal_saved", "equity_saved", "pdf_exported", "comparison_run", "portfolio_viewed", "town_compared", "deal_loaded", "equity_loaded"];
   if (highIntent.indexOf(action) >= 0) {
     var hookUrl = ACTIVITY_WEBHOOK_URL || WEBHOOK_URL;
     if (!hookUrl) return;
     try {
-      await fetch(hookUrl, { method: "POST", headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ type: "prospect_activity", ...entry, source: "Capital Region Investor Hub" })
+      var actPayload = {
+        type: "prospect_activity",
+        name: entry.name,
+        email: entry.email,
+        phone: entry.phone,
+        action: entry.action,
+        detail: entry.detail,
+        timestamp: entry.ts,
+        source: "Capital Region Investor Hub",
+        page_url: (typeof window !== "undefined" ? window.location.href : "")
+      };
+      var actBody = Object.keys(actPayload).map(function(k) {
+        return encodeURIComponent(k) + "=" + encodeURIComponent(actPayload[k]);
+      }).join("&");
+      await fetch(hookUrl, {
+        method: "POST",
+        headers: { "Content-Type": "application/x-www-form-urlencoded" },
+        body: actBody
       });
     } catch (e) { /* silent */ }
   }
@@ -338,7 +368,7 @@ function DealAnalyzer({ onTrack }) {
     setSavedDeals(updated); setSaveMsg("Saved!"); setTimeout(function() { setSaveMsg(""); }, 2000);
     if (onTrack) onTrack("deal_saved", label + " | " + strategy.toUpperCase() + " | " + fmtD(d.purchasePrice) + (d.units ? " | " + d.units + " units" : ""));
   };
-  var handleLoad = function(saved) { var rest = Object.assign({}, saved); delete rest.id; delete rest.savedAt; delete rest.label; var s = saved.strategy; if (s) setStrategy(s); delete rest.strategy; setD(function(prev) { return { ...prev, ...rest }; }); setShowSaved(false); };
+  var handleLoad = function(saved) { var rest = Object.assign({}, saved); delete rest.id; delete rest.savedAt; delete rest.label; var s = saved.strategy; if (s) setStrategy(s); delete rest.strategy; setD(function(prev) { return { ...prev, ...rest }; }); setShowSaved(false); if (onTrack) onTrack("deal_loaded", saved.label + " | " + (saved.strategy || "").toUpperCase()); };
   var handleDelete = async function(id) { var updated = await deleteAnalysis(DEALS_KEY, id); setSavedDeals(updated); };
 
   // ---- RENTAL CALCS (LTR/STR/MTR) ----
@@ -476,6 +506,7 @@ function DealAnalyzer({ onTrack }) {
       <StrategyToggle value={strategy} onChange={function(newStrat) {
         var prevStrat = strategy;
         setStrategy(newStrat);
+        if (onTrack && newStrat !== prevStrat) onTrack("strategy_switched", "To: " + newStrat.toUpperCase());
         // Default purchase price to $200k when entering Flip or BRRRR from a rental strategy
         if ((newStrat === "flip" || newStrat === "brrrr") && (prevStrat === "ltr" || prevStrat === "str" || prevStrat === "mtr")) {
           setD(function(prev) { return { ...prev, purchasePrice: 200000 }; });
@@ -967,6 +998,7 @@ function EquityEstimator({ onTrack }) {
       delete rest.rate;
     }
     setD(function(prev) { return { ...prev, ...rest }; }); setShowSaved(false);
+    if (onTrack) onTrack("equity_loaded", saved.label || "Untitled");
   };
   var handleDelete = async function(id) { var updated = await deleteAnalysis(EQUITIES_KEY, id); setSavedEquities(updated); };
 
@@ -1411,11 +1443,11 @@ function ActivityLog() {
   var actionTypes = log.reduce(function(acc, e) { if (acc.indexOf(e.action) < 0) acc.push(e.action); return acc; }, []);
 
   var actionLabel = function(a) {
-    var labels = { tab_viewed: "Tab Viewed", deal_saved: "Deal Saved", equity_saved: "Equity Saved", pdf_exported: "PDF Exported", comparison_run: "Comparison Run", portfolio_viewed: "Portfolio Viewed", town_viewed: "Town Viewed", town_compared: "Town Compared", lead_registered: "Lead Registered" };
+    var labels = { tab_viewed: "Tab Viewed", deal_saved: "Deal Saved", equity_saved: "Equity Saved", pdf_exported: "PDF Exported", comparison_run: "Comparison Run", portfolio_viewed: "Portfolio Viewed", town_viewed: "Town Viewed", town_compared: "Town Compared", lead_registered: "Lead Registered", strategy_switched: "Strategy Switched", deal_loaded: "Loaded Saved Deal", equity_loaded: "Loaded Property" };
     return labels[a] || a;
   };
   var intentColor = function(a) {
-    var high = ["deal_saved", "equity_saved", "pdf_exported", "comparison_run", "portfolio_viewed", "town_compared"];
+    var high = ["deal_saved", "equity_saved", "pdf_exported", "comparison_run", "portfolio_viewed", "town_compared", "deal_loaded", "equity_loaded"];
     if (high.indexOf(a) >= 0) return "#4ade80";
     return B.grayText;
   };
@@ -1443,7 +1475,7 @@ function ActivityLog() {
 
   // Summary stats
   var uniqueEmails = log.reduce(function(acc, e) { if (e.email && acc.indexOf(e.email) < 0) acc.push(e.email); return acc; }, []);
-  var highIntentCount = log.filter(function(e) { return ["deal_saved", "equity_saved", "pdf_exported", "comparison_run", "portfolio_viewed", "town_compared"].indexOf(e.action) >= 0; }).length;
+  var highIntentCount = log.filter(function(e) { return ["deal_saved", "equity_saved", "pdf_exported", "comparison_run", "portfolio_viewed", "town_compared", "deal_loaded", "equity_loaded"].indexOf(e.action) >= 0; }).length;
 
   return (
     <div>
