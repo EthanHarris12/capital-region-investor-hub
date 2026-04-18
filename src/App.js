@@ -19,9 +19,65 @@ const loadLead = async () => {
   } catch (e) { /* silent fail */ }
   return null;
 };
+// ============================================
+// UTM TRACKING — Captures attribution from URL and persists across session
+// ============================================
+const UTM_KEY = "crih_utm";
+const UTM_PARAMS = ["utm_source", "utm_medium", "utm_campaign", "utm_content", "utm_term", "gclid", "fbclid"];
+
+const captureUTMs = function() {
+  if (typeof window === "undefined") return {};
+  try {
+    var params = new URLSearchParams(window.location.search);
+    var captured = {};
+    var hasAny = false;
+    UTM_PARAMS.forEach(function(k) {
+      var v = params.get(k);
+      if (v) { captured[k] = v; hasAny = true; }
+    });
+    // Referrer fallback — if no UTM present but external referrer exists
+    if (!hasAny && document.referrer) {
+      try {
+        var refHost = new URL(document.referrer).hostname;
+        var currentHost = window.location.hostname;
+        if (refHost && refHost !== currentHost) {
+          captured.referrer = refHost;
+          hasAny = true;
+        }
+      } catch (e) {}
+    }
+    if (hasAny) {
+      captured.landing_page = window.location.pathname + window.location.search;
+      captured.captured_at = new Date().toISOString();
+      // Persist so attribution survives navigation within the site
+      try {
+        if (window.storage) { window.storage.set(UTM_KEY, JSON.stringify(captured)); }
+        else if (typeof localStorage !== "undefined") { localStorage.setItem(UTM_KEY, JSON.stringify(captured)); }
+      } catch (e) {}
+      return captured;
+    }
+    // Fall back to previously stored UTMs (same session navigation)
+    try {
+      var stored = typeof localStorage !== "undefined" ? localStorage.getItem(UTM_KEY) : null;
+      return stored ? JSON.parse(stored) : {};
+    } catch (e) { return {}; }
+  } catch (e) { return {}; }
+};
+
+const getStoredUTMs = function() {
+  try {
+    if (typeof localStorage !== "undefined") {
+      var s = localStorage.getItem(UTM_KEY);
+      return s ? JSON.parse(s) : {};
+    }
+  } catch (e) {}
+  return {};
+};
+
 const sendToWebhook = async (lead) => {
   if (!WEBHOOK_URL) return;
   try {
+    var utms = getStoredUTMs();
     var payload = {
       name: lead.name || "",
       email: lead.email || "",
@@ -30,7 +86,17 @@ const sendToWebhook = async (lead) => {
       timestamp: new Date().toISOString(),
       source: "Capital Region Investor Hub",
       page_url: (typeof window !== "undefined" ? window.location.href : ""),
-      user_agent: (typeof navigator !== "undefined" ? navigator.userAgent : "")
+      user_agent: (typeof navigator !== "undefined" ? navigator.userAgent : ""),
+      // Attribution fields (always present, empty string if no UTMs captured)
+      utm_source: utms.utm_source || "direct",
+      utm_medium: utms.utm_medium || "",
+      utm_campaign: utms.utm_campaign || "",
+      utm_content: utms.utm_content || "",
+      utm_term: utms.utm_term || "",
+      gclid: utms.gclid || "",
+      fbclid: utms.fbclid || "",
+      referrer: utms.referrer || "",
+      landing_page: utms.landing_page || ""
     };
     var formBody = Object.keys(payload).map(function(k) {
       return encodeURIComponent(k) + "=" + encodeURIComponent(payload[k]);
@@ -89,6 +155,7 @@ const ACTIVITY_WEBHOOK_URL = ""; // Optional: separate Zapier webhook for activi
 
 const logActivity = async function(lead, action, detail) {
   if (!lead || !lead.email) return;
+  var utms = getStoredUTMs();
   var entry = {
     id: Date.now(),
     ts: new Date().toISOString(),
@@ -96,7 +163,9 @@ const logActivity = async function(lead, action, detail) {
     email: lead.email || "",
     phone: lead.phone || "",
     action: action,
-    detail: detail || ""
+    detail: detail || "",
+    utm_source: utms.utm_source || "direct",
+    utm_campaign: utms.utm_campaign || ""
   };
   try {
     var existing = [];
@@ -125,7 +194,9 @@ const logActivity = async function(lead, action, detail) {
         detail: entry.detail,
         timestamp: entry.ts,
         source: "Capital Region Investor Hub",
-        page_url: (typeof window !== "undefined" ? window.location.href : "")
+        page_url: (typeof window !== "undefined" ? window.location.href : ""),
+        utm_source: entry.utm_source,
+        utm_campaign: entry.utm_campaign
       };
       var actBody = Object.keys(actPayload).map(function(k) {
         return encodeURIComponent(k) + "=" + encodeURIComponent(actPayload[k]);
@@ -351,7 +422,7 @@ function DealAnalyzer({ onTrack }) {
     furnishingTotal: 15000,
     maintenancePct: 5, capexPct: 5, management: 0,
     taxes: 6000, insurance: 2400, utilities: 0, otherExp: 0,
-    lenderFees: 1, attorneyFees: 1000, titleFees: 3000,
+    lenderFees: 1, attorneyFees: 1000, titleFees: 2200, appraisal: 660, sellerConcession: 0,
     // Flip fields
     flipArv: 350000, flipMaoPct: 70, flipRehab: 50000, flipClosing: 12000, flipHoldingMonths: 4, flipHoldingPerMonth: 1500, flipSellingPct: 6,
     // BRRRR fields
@@ -381,8 +452,8 @@ function DealAnalyzer({ onTrack }) {
   var annMtg = mtg * 12;
   var furnishing = (strategy === "str" || strategy === "mtr") ? d.furnishingTotal : 0;
   var lenderFeeDollars = loan * (d.lenderFees / 100);
-  var closingCosts = lenderFeeDollars + d.attorneyFees + d.titleFees;
-  var totalCashInvested = dp + furnishing + closingCosts;
+  var closingCosts = lenderFeeDollars + d.attorneyFees + d.titleFees + d.appraisal;
+  var totalCashInvested = dp + furnishing + closingCosts - d.sellerConcession;
 
   var gri = 0, egi = 0;
   if (strategy === "str") {
@@ -411,7 +482,7 @@ function DealAnalyzer({ onTrack }) {
   var grm = gri > 0 ? d.purchasePrice / gri : 0;
   var expR = egi > 0 ? (totExp / egi) * 100 : 0;
   var gc = function(m, v) { if (m === "cap") return v >= 8 ? "#4ade80" : v >= 6 ? B.greenLight : "#ef4444"; if (m === "coc") return v >= 10 ? "#4ade80" : v >= 6 ? B.greenLight : "#ef4444"; if (m === "dscr") return v >= 1.25 ? "#4ade80" : v >= 1.0 ? B.greenLight : "#ef4444"; if (m === "cf") return v >= 200 ? "#4ade80" : v >= 100 ? B.greenLight : "#ef4444"; return B.white; };
-  var proj = Array.from({ length: 5 }, function(_, i) { var y = i + 1; return { y: y, v: d.purchasePrice * Math.pow(1.04, y), n: noi * Math.pow(1.03, y), c: noi * Math.pow(1.03, y) - annMtg }; });
+  var proj = Array.from({ length: 5 }, function(_, i) { var y = i + 1; return { y: y, v: d.purchasePrice * Math.pow(1.03, y), n: noi * Math.pow(1.03, y), c: noi * Math.pow(1.03, y) - annMtg }; });
 
   // ---- FLIP CALCS ----
   var flipMao = (d.flipMaoPct / 100) * d.flipArv - d.flipRehab;
@@ -491,9 +562,16 @@ function DealAnalyzer({ onTrack }) {
       rows.push(
         ["---", "RETURNS"], ["NOI", fmtD(noi), "green"], ["Annual Cashflow", fmtD(cf), cf >= 0 ? "green" : "red"], ["Cash Flow / Door / Mo", fmtD(cfDoor), cfDoor >= 100 ? "green" : "red"],
         ["Cap Rate", fmtP(cap), cap >= 7 ? "green" : undefined], ["Cash-on-Cash Return", fmtP(coc), coc >= 8 ? "green" : undefined], ["DSCR", (dscr === Infinity ? "\u221E" : dscr.toFixed(2) + "x"), dscr >= 1.25 ? "green" : dscr < 1 ? "red" : undefined], ["GRM", grm.toFixed(1) + "x"], ["Expense Ratio", fmtP(expR)],
-        ["---", "CASH TO CLOSE"], ["Down Payment", fmtD(dp)], ["Closing Costs", fmtD(closingCosts)]
+        ["---", "CASH TO CLOSE"],
+        ["Down Payment", fmtD(dp)],
+        ["Lender Fees (" + d.lenderFees + "%)", fmtD(lenderFeeDollars)],
+        ["Attorney Fees", fmtD(d.attorneyFees)],
+        ["Title Fees", fmtD(d.titleFees)]
       );
+      if (d.appraisal > 0) rows.push(["Appraisal", fmtD(d.appraisal)]);
       if (strategy !== "ltr") rows.push(["Furnishing", fmtD(furnishing)]);
+      rows.push(["Gross Closing Costs", fmtD(closingCosts)]);
+      if (d.sellerConcession > 0) rows.push(["Seller Concession", "(" + fmtD(d.sellerConcession) + ")"]);
       rows.push(["Total Cash Invested", fmtD(totalCashInvested), "green"]);
     }
     exportPDF("Deal Analysis \u2014 " + (d.address || "Untitled"), rows, stratLabel);
@@ -721,6 +799,7 @@ function DealAnalyzer({ onTrack }) {
           <div>
             {sLabel("Closing Costs")}
             <div style={{ display: "flex", gap: 10, flexWrap: "wrap" }}><Field label="Lender Fees %" value={d.lenderFees} onChange={u("lenderFees")} suffix="%" small step={0.1} /><Field label="Attorney" value={d.attorneyFees} onChange={u("attorneyFees")} prefix="$" small step={100} /><Field label="Title Fees" value={d.titleFees} onChange={u("titleFees")} prefix="$" small step={100} /></div>
+            <div style={{ display: "flex", gap: 10, flexWrap: "wrap" }}><Field label="Appraisal" value={d.appraisal} onChange={u("appraisal")} prefix="$" small step={50} /><Field label="Seller Concession" value={d.sellerConcession} onChange={u("sellerConcession")} prefix="$" small step={500} /></div>
           </div>
         </div>
         <div>
@@ -755,7 +834,10 @@ function DealAnalyzer({ onTrack }) {
             {rw("Lender Fees (" + d.lenderFees + "%)", fmtD(lenderFeeDollars))}
             {rw("Attorney Fees", fmtD(d.attorneyFees))}
             {rw("Title Fees", fmtD(d.titleFees))}
+            {d.appraisal > 0 && rw("Appraisal", fmtD(d.appraisal))}
             {(strategy === "str" || strategy === "mtr") && rw("Furnishing", fmtD(furnishing))}
+            {rw("Gross Closing Costs", fmtD(closingCosts))}
+            {d.sellerConcession > 0 && rw("Seller Concession", "(" + fmtD(d.sellerConcession) + ")")}
             {rw("Total Cash Invested", fmtD(totalCashInvested), true)}
           </div>
           <div style={pStyle}>
@@ -771,7 +853,7 @@ function DealAnalyzer({ onTrack }) {
               <span style={{ color: B.grayMuted, fontWeight: 700 }}>Yr</span><span style={{ color: B.grayMuted, fontWeight: 700 }}>Value</span><span style={{ color: B.grayMuted, fontWeight: 700 }}>NOI</span><span style={{ color: B.grayMuted, fontWeight: 700 }}>Cashflow</span>
               {proj.map(function(p) { return (<div key={p.y} style={{display:"contents"}}><span style={{ color: B.grayText }}>{p.y}</span><span style={{ color: B.white }}>{fmtC(p.v)}</span><span style={{ color: B.greenLight }}>{fmtC(p.n)}</span><span style={{ color: p.c >= 0 ? "#4ade80" : "#ef4444" }}>{fmtC(p.c)}</span></div>); })}
             </div>
-            <div style={{ fontSize: 9, color: B.grayMuted, marginTop: 6 }}>Assumes 4% appreciation, 3% rent growth</div>
+            <div style={{ fontSize: 9, color: B.grayMuted, marginTop: 6 }}>Assumes 3% appreciation, 3% rent growth</div>
           </div>
         </div>
       </div>
@@ -1322,7 +1404,7 @@ function DealComparison({ onTrack }) {
     var totExp2 = (d.taxes || 0) + (d.insurance || 0) + gri2 * ((d.maintenancePct || 5) / 100) + gri2 * ((d.capexPct || 5) / 100) + egi2 * ((d.management || 0) / 100) + (d.utilities || 0) * 12 + (d.otherExp || 0) * 12;
     var noi2 = egi2 - totExp2;
     var furn = (strat === "str" || strat === "mtr") ? (d.furnishingTotal || 0) : 0;
-    var totalCash2 = dp2 + furn + loan2 * ((d.lenderFees || 1) / 100) + (d.attorneyFees || 0) + (d.titleFees || 0);
+    var totalCash2 = dp2 + furn + loan2 * ((d.lenderFees || 1) / 100) + (d.attorneyFees || 0) + (d.titleFees || 0) + (d.appraisal || 0) - (d.sellerConcession || 0);
     var cf2 = noi2 - annMtg2;
     var cap2 = d.purchasePrice > 0 ? (noi2 / d.purchasePrice) * 100 : 0;
     var coc2 = totalCash2 > 0 ? (cf2 / totalCash2) * 100 : 0;
@@ -1460,9 +1542,9 @@ function ActivityLog() {
 
   var handleExportCSV = function() {
     if (log.length === 0) return;
-    var header = "Timestamp,Name,Email,Phone,Action,Detail\n";
+    var header = "Timestamp,Name,Email,Phone,Action,Detail,UTM Source,UTM Campaign\n";
     var rows = log.map(function(e) {
-      return [e.ts, '"' + (e.name || "") + '"', e.email || "", e.phone || "", e.action, '"' + (e.detail || "").replace(/"/g, '""') + '"'].join(",");
+      return [e.ts, '"' + (e.name || "") + '"', e.email || "", e.phone || "", e.action, '"' + (e.detail || "").replace(/"/g, '""') + '"', e.utm_source || "direct", '"' + (e.utm_campaign || "") + '"'].join(",");
     }).join("\n");
     var blob = new Blob([header + rows], { type: "text/csv" });
     var url = URL.createObjectURL(blob);
@@ -1476,6 +1558,18 @@ function ActivityLog() {
   // Summary stats
   var uniqueEmails = log.reduce(function(acc, e) { if (e.email && acc.indexOf(e.email) < 0) acc.push(e.email); return acc; }, []);
   var highIntentCount = log.filter(function(e) { return ["deal_saved", "equity_saved", "pdf_exported", "comparison_run", "portfolio_viewed", "town_compared", "deal_loaded", "equity_loaded"].indexOf(e.action) >= 0; }).length;
+
+  // UTM source breakdown — aggregate events + unique prospects per source
+  var sourceMap = {};
+  log.forEach(function(e) {
+    var src = e.utm_source || "direct";
+    if (!sourceMap[src]) sourceMap[src] = { count: 0, emails: [] };
+    sourceMap[src].count += 1;
+    if (e.email && sourceMap[src].emails.indexOf(e.email) < 0) sourceMap[src].emails.push(e.email);
+  });
+  var sourceBreakdown = Object.keys(sourceMap).map(function(k) {
+    return { source: k, count: sourceMap[k].count, prospects: sourceMap[k].emails.length };
+  }).sort(function(a, b) { return b.count - a.count; });
 
   return (
     <div>
@@ -1493,6 +1587,21 @@ function ActivityLog() {
         <StatCard label="High-Intent Actions" value={highIntentCount.toString()} accent="#4ade80" />
       </div>
 
+      {sourceBreakdown.length > 0 && (
+        <div style={{ ...pStyle, marginBottom: 16 }}>
+          {pH("Traffic Sources (UTM)")}
+          <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(140px, 1fr))", gap: 8 }}>
+            {sourceBreakdown.map(function(s) { return (
+              <div key={s.source} style={{ background: "rgba(255,255,255,0.03)", borderRadius: 6, padding: "8px 10px", borderLeft: "2px solid " + (s.source === "direct" ? B.grayMuted : B.greenLight) }}>
+                <div style={{ fontSize: 10, color: B.grayMuted, textTransform: "uppercase", letterSpacing: 1, fontWeight: 700 }}>{s.source}</div>
+                <div style={{ fontSize: 16, color: B.white, fontWeight: 700 }}>{s.count}</div>
+                <div style={{ fontSize: 9, color: B.grayText }}>{s.prospects} prospects</div>
+              </div>
+            ); })}
+          </div>
+        </div>
+      )}
+
       <div style={{ display: "flex", gap: 6, marginBottom: 16, flexWrap: "wrap" }}>
         <button onClick={function() { setFilter("all"); }} style={{ padding: "6px 12px", fontSize: 11, borderRadius: 5, cursor: "pointer", border: filter === "all" ? "1px solid " + B.green : "1px solid rgba(27,72,18,0.15)", background: filter === "all" ? "rgba(27,72,18,0.2)" : "transparent", color: filter === "all" ? B.greenLight : B.grayText, fontFamily: "'DM Sans', sans-serif", fontWeight: 600 }}>All ({log.length})</button>
         {actionTypes.map(function(a) {
@@ -1508,7 +1617,7 @@ function ActivityLog() {
           <table style={{ width: "100%", borderCollapse: "collapse", fontSize: 12 }}>
             <thead>
               <tr style={{ borderBottom: "2px solid " + B.green }}>
-                {["Time", "Prospect", "Action", "Detail"].map(function(h) {
+                {["Time", "Prospect", "Source", "Action", "Detail"].map(function(h) {
                   return <th key={h} style={{ textAlign: "left", padding: "8px 10px", color: B.grayMuted, fontWeight: 700, fontSize: 10, textTransform: "uppercase", letterSpacing: 1.5 }}>{h}</th>;
                 })}
               </tr>
@@ -1521,6 +1630,10 @@ function ActivityLog() {
                     <td style={{ padding: "8px 10px" }}>
                       <div style={{ color: B.white, fontWeight: 600, fontSize: 12 }}>{e.name}</div>
                       <div style={{ color: B.grayMuted, fontSize: 10 }}>{e.email}{e.phone ? " · " + e.phone : ""}</div>
+                    </td>
+                    <td style={{ padding: "8px 10px" }}>
+                      <span style={{ fontSize: 11, color: (e.utm_source && e.utm_source !== "direct") ? B.greenLight : B.grayMuted, fontWeight: 600 }}>{e.utm_source || "direct"}</span>
+                      {e.utm_campaign && <div style={{ fontSize: 9, color: B.grayMuted }}>{e.utm_campaign}</div>}
                     </td>
                     <td style={{ padding: "8px 10px" }}>
                       <span style={{ display: "inline-block", padding: "3px 8px", borderRadius: 4, fontSize: 10, fontWeight: 700, background: intentColor(e.action) + "18", color: intentColor(e.action) }}>{actionLabel(e.action)}</span>
@@ -1550,6 +1663,8 @@ export default function App() {
   var isAdmin = (typeof window !== "undefined") && (window.location.search.indexOf("admin=true") >= 0 || window.location.search.indexOf("admin=1") >= 0);
 
   useEffect(function() {
+    // Capture UTM parameters on landing (persists via localStorage for same-session attribution)
+    captureUTMs();
     loadLead().then(function(saved) {
       if (saved && saved.email) setLead(saved);
       setLoading(false);
