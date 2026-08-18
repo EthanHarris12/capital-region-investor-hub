@@ -16,8 +16,15 @@ export const metadata = {
 };
 
 export const viewport = {
-  themeColor: "#ffffff",
+  themeColor: [
+    { media: "(prefers-color-scheme: light)", color: "#f6f9f5" },
+    { media: "(prefers-color-scheme: dark)", color: "#0e1a12" },
+  ],
 };
+
+// Applies the saved theme before first paint so the page never
+// flashes light before switching to dark.
+const noFlashTheme = `(function(){try{var t=localStorage.getItem('crih_theme');if(t==='dark'||t==='light'){document.documentElement.setAttribute('data-theme',t);}}catch(e){}})();`;
 
 export default function RootLayout({ children }) {
   return (
@@ -143,6 +150,7 @@ export default function RootLayout({ children }) {
     >
       <html lang="en" className={dmSans.variable}>
         <head>
+          <script dangerouslySetInnerHTML={{ __html: noFlashTheme }} />
           {/* Google Analytics */}
           <Script
             src="https://www.googletagmanager.com/gtag/js?id=G-5MR0S7LSM1"

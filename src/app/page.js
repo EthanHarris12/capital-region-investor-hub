@@ -11,11 +11,11 @@ function LoadingFallback() {
         display: "flex",
         alignItems: "center",
         justifyContent: "center",
-        background: "linear-gradient(170deg, #f1f5f9 0%, #f8fafc 40%, #ffffff 100%)",
+        background: "linear-gradient(170deg, var(--b-navy-deep) 0%, var(--b-navy) 40%, var(--b-navy-light) 100%)",
         fontFamily: "'DM Sans', sans-serif",
       }}
     >
-      <div style={{ color: "#475569", fontSize: 14 }}>Loading...</div>
+      <div style={{ color: "var(--b-gray-text)", fontSize: 14 }}>Loading...</div>
     </div>
   );
 }

@@ -1,5 +1,5 @@
 "use client";
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useSyncExternalStore } from "react";
 import { useUser, SignOutButton } from "@clerk/nextjs";
 import { useSearchParams } from "next/navigation";
 
@@ -228,7 +228,7 @@ const clearActivity = async function() {
   } catch (e) {}
 };
 
-const B = { green: "#1b4812", greenLight: "#2a6b1a", greenDark: "#143a0d", navy: "#f1f5f9", navyDeep: "#f8fafc", navyLight: "#ffffff", charcoal: "#272727", black: "#000000", white: "#0f172a", grayText: "#475569", grayMuted: "#64748b", grayBorder: "rgba(0,0,0,0.1)", greenGlow: "rgba(27,72,18,0.15)" };
+const B = { green: "var(--b-green)", greenLight: "var(--b-green-light)", greenDark: "var(--b-green-dark)", navy: "var(--b-navy)", navyDeep: "var(--b-navy-deep)", navyLight: "var(--b-navy-light)", charcoal: "#272727", black: "#000000", white: "var(--b-white)", grayText: "var(--b-gray-text)", grayMuted: "var(--b-gray-muted)", grayBorder: "var(--b-gray-border)", greenGlow: "var(--b-green-glow)", subtle: "var(--b-subtle)", pos: "var(--b-pos)", neg: "var(--b-neg)" };
 
 const MARKET_DATA = {
   "Albany": { medianPrice: 245000, avgRent2Bed: 1500, avgRent3Bed: 1800, capRate: 7.8, daysOnMarket: 18, inventoryCount: 31, yoyAppreciation: 7.1, vacancyRate: 4.8, popGrowth: 0.3, medianHHIncome: 48200, walkScore: 68, schoolDistrict: "Albany City", schoolRating: "B-", description: "New York's state capital and the economic center of the Capital Region. Major employers include the State of New York, Albany Medical Center, Albany NanoTech Complex, and the University at Albany (SUNY). The city features a walkable downtown with a growing restaurant and craft beverage scene along Lark Street and the Warehouse District. The Times Union Center hosts concerts and sporting events, Washington Park features an annual tulip festival, and the Empire State Plaza offers free summer concerts and winter ice skating. Additional amenities include the Palace Theatre, New York State Museum, and access to the Adirondacks via I-87. For investors, Albany offers strong multifamily density, consistent rental demand supported by institutional employment, and affordable entry relative to comparable northeast capitals." },
@@ -255,6 +255,22 @@ const MARKET_DATA = {
 };
 
 const LAST_UPDATED = "March 2026";
+
+// ============================================
+// FAIR HOUSING
+// School ratings are a recognized steering proxy, so any surface that
+// displays them carries this notice. Kept as one constant so the screen
+// and the PDF export can never drift apart.
+// ============================================
+const FAIR_HOUSING_NOTICE = "Fair Housing Notice: School district names and ratings are provided for general informational purposes only, are compiled from third-party sources, and are not verified for accuracy. They are not a representation about the quality or suitability of any school, district, neighborhood, or community, and should not be relied upon when choosing where to live or invest. School district boundaries and school assignments change and are not guaranteed by a property's location \u2014 verify assignment directly with the district. Empire Real Estate Firm and Ethan Harris do not steer clients toward or away from any area. All real estate advertised herein is subject to the federal Fair Housing Act and the New York State Human Rights Law, which make it illegal to indicate any preference, limitation, or discrimination based on race, color, religion, sex, disability, familial status, national origin, sexual orientation, gender identity or expression, military status, age, marital status, or any other class protected by law.";
+
+function FairHousingNotice({ style }) {
+  return (
+    <div style={{ fontSize: 9, lineHeight: 1.6, color: B.grayMuted, marginTop: 8, ...style }}>
+      {FAIR_HOUSING_NOTICE}
+    </div>
+  );
+}
 // Fonts are loaded via layout.js (next/font/google + link tag for Bebas Neue)
 const fonts = ``;
 
@@ -271,7 +287,7 @@ const fmtD = (n) => "$" + Math.round(n).toLocaleString();
 // ============================================
 // PDF EXPORT (NEW)
 // ============================================
-function exportPDF(title, rows, subtitle) {
+function exportPDF(title, rows, subtitle, footnote) {
   const w = window.open("", "_blank");
   if (!w) { alert("Allow popups to export PDF"); return; }
   const rowsHtml = rows.map(function(row) {
@@ -290,6 +306,7 @@ function exportPDF(title, rows, subtitle) {
     '<h2 style="font-family:Bebas Neue,sans-serif;font-size:26px;margin-bottom:4px;color:#1c2b3d;letter-spacing:1.5px">' + title + '</h2>' +
     (subtitle ? '<p style="font-size:12px;color:#5a6d82;margin-bottom:20px">' + subtitle + '</p>' : '<div style="margin-bottom:20px"></div>') +
     '<table style="width:100%;border-collapse:collapse">' + rowsHtml + '</table>' +
+    (footnote ? '<div style="margin-top:26px;padding:12px 14px;background:#f7f9f6;border-left:3px solid #1b4812;font-size:9px;line-height:1.6;color:#5a6d82">' + footnote + '</div>' : '') +
     '<div style="margin-top:40px;padding-top:14px;border-top:2px solid #1b4812;text-align:center">' +
     '<p style="font-size:11px;color:#5a6d82;margin:0 0 4px 0">Prepared by Ethan Harris &middot; Empire Real Estate Firm &middot; Capital Region, NY</p>' +
     '<p style="font-size:11px;color:#5a6d82;margin:0 0 4px 0">(518) 588-1122 &middot; Ethan@EmpireRealEstateFirm.com</p>' +
@@ -318,7 +335,7 @@ function Field({ label, value, onChange, prefix, suffix, type = "number", placeh
       {prefix && <span style={{ position: "absolute", left: 12, top: "50%", transform: "translateY(-50%)", color: B.grayMuted, fontSize: 13, fontWeight: 600 }}>{prefix}</span>}
       <input type={type} placeholder={placeholder} value={value} step={step}
         onChange={function(e) { onChange(type === "number" ? (e.target.value === "" ? "" : Number(e.target.value)) : e.target.value); }}
-        style={{ width: "100%", padding: prefix ? "10px 12px 10px 26px" : suffix ? "10px 38px 10px 12px" : "10px 12px", fontSize: 14, background: "rgba(0,0,0,0.05)", border: "1px solid rgba(27,72,18,0.25)", borderRadius: 8, color: B.white, outline: "none", fontFamily: "'DM Sans', sans-serif", boxSizing: "border-box", transition: "border 0.2s" }}
+        style={{ width: "100%", padding: prefix ? "10px 12px 10px 26px" : suffix ? "10px 38px 10px 12px" : "10px 12px", fontSize: 14, background: "var(--b-subtle)", border: "1px solid rgba(27,72,18,0.25)", borderRadius: 8, color: B.white, outline: "none", fontFamily: "'DM Sans', sans-serif", boxSizing: "border-box", transition: "border 0.2s" }}
         onFocus={function(e) { e.target.style.borderColor = B.green; }} onBlur={function(e) { e.target.style.borderColor = "rgba(27,72,18,0.25)"; }} />
       {suffix && <span style={{ position: "absolute", right: 12, top: "50%", transform: "translateY(-50%)", color: B.grayMuted, fontSize: 11, fontWeight: 600 }}>{suffix}</span>}
     </div>
@@ -330,11 +347,11 @@ var pStyle = { background: B.navyLight, border: "1px solid " + B.grayBorder, bor
 var pH = function(t) { return <div style={{ fontSize: 10, color: B.grayMuted, textTransform: "uppercase", letterSpacing: 1.5, marginBottom: 8, fontWeight: 700 }}>{t}</div>; };
 var rw = function(l, v, bold, pos) { return (<div style={{ display: "flex", justifyContent: "space-between", padding: "4px 0", borderTop: bold ? "1px solid rgba(27,72,18,0.2)" : "none", marginTop: bold ? 4 : 0, paddingTop: bold ? 6 : 4 }}>
   <span style={{ fontSize: 12, color: bold ? B.greenLight : B.grayText, fontWeight: bold ? 700 : 400 }}>{l}</span>
-  <span style={{ fontSize: 12, fontWeight: bold ? 800 : 500, color: bold ? (pos !== undefined ? (pos ? "#16a34a" : "#dc2626") : B.white) : B.white }}>{v}</span>
+  <span style={{ fontSize: 12, fontWeight: bold ? 800 : 500, color: bold ? (pos !== undefined ? (pos ? "var(--b-pos)" : "var(--b-neg)") : B.white) : B.white }}>{v}</span>
 </div>); };
 
 function StrategyToggle({ value, onChange }) {
-  return (<div style={{ display: "flex", gap: 4, marginBottom: 18, background: "rgba(0,0,0,0.04)", borderRadius: 8, padding: 3, flexWrap: "wrap" }}>
+  return (<div style={{ display: "flex", gap: 4, marginBottom: 18, background: "var(--b-subtle)", borderRadius: 8, padding: 3, flexWrap: "wrap" }}>
     {[["ltr", "Long-Term"], ["str", "Short-Term"], ["mtr", "Mid-Term"], ["flip", "Flip"], ["brrrr", "BRRRR"]].map(function(pair) { var k = pair[0], l = pair[1]; return (
       <button key={k} onClick={function() { onChange(k); }} style={{ flex: 1, minWidth: 80, padding: "8px 12px", fontSize: 11, fontWeight: 700, borderRadius: 6, cursor: "pointer", border: "none", background: value === k ? B.green : "transparent", color: value === k ? "#ffffff" : B.grayMuted, fontFamily: "'DM Sans', sans-serif", textTransform: "uppercase", letterSpacing: 1, transition: "all 0.2s" }}>{l}</button>
     ); })}
@@ -346,6 +363,52 @@ function ActionBtn({ label, onClick, primary, small }) {
 }
 
 // ============================================
+// ============================================
+// THEME (light default, dark opt-in)
+// The actual colors live in globals.css as CSS custom
+// properties; this only flips <html data-theme>.
+// ============================================
+const THEME_KEY = "crih_theme";
+
+// The <html data-theme> attribute is the single source of truth. An inline
+// script in layout.js sets it from localStorage before first paint, so we
+// subscribe to the DOM rather than mirroring it into React state — that
+// keeps the toggle correct without a hydration mismatch or a setState
+// inside an effect.
+function subscribeToTheme(onChange) {
+  var observer = new MutationObserver(onChange);
+  observer.observe(document.documentElement, { attributes: true, attributeFilter: ["data-theme"] });
+  return function () { observer.disconnect(); };
+}
+function getThemeSnapshot() {
+  return document.documentElement.getAttribute("data-theme") === "dark" ? "dark" : "light";
+}
+function getServerThemeSnapshot() { return "light"; }
+
+function useTheme() {
+  const theme = useSyncExternalStore(subscribeToTheme, getThemeSnapshot, getServerThemeSnapshot);
+  var applyTheme = function (next) {
+    document.documentElement.setAttribute("data-theme", next);
+    try { localStorage.setItem(THEME_KEY, next); } catch (e) { /* silent fail */ }
+  };
+  return [theme, applyTheme];
+}
+
+function ThemeToggle({ theme, onChange }) {
+  var isDark = theme === "dark";
+  var label = isDark ? "Switch to light mode" : "Switch to dark mode";
+  return (
+    <button
+      onClick={function () { onChange(isDark ? "light" : "dark"); }}
+      title={label}
+      aria-label={label}
+      style={{ display: "flex", alignItems: "center", justifyContent: "center", width: 34, height: 34, padding: 0, borderRadius: 8, cursor: "pointer", border: "1px solid " + B.grayBorder, background: B.navyLight, fontSize: 15, lineHeight: 1, fontFamily: "'DM Sans', sans-serif" }}
+    >
+      <span aria-hidden="true">{isDark ? "\u2600\uFE0F" : "\uD83C\uDF19"}</span>
+    </button>
+  );
+}
+
 // LEAD GATE — Removed (replaced by Clerk authentication)
 // ============================================
 
@@ -413,6 +476,13 @@ function DealAnalyzer({ onTrack }) {
     gri = (d.grossRent + d.otherIncome) * 12;
     egi = gri * (1 - d.vacancy / 100);
   }
+  // The deduction between gross and effective income. For LTR this is
+  // vacancy; for STR/MTR the vacancy assumption is already baked into
+  // occupancy, so the deduction is the platform fee.
+  var incomeDeductionDollar = gri - egi;
+  var incomeDeductionLabel = strategy === "str" ? "Platform Fees (" + d.platformFeePct + "%)"
+    : strategy === "mtr" ? "Platform Fees (" + d.mtrPlatformPct + "%)"
+    : "Vacancy (" + d.vacancy + "%)";
   var maintenanceDollar = gri * (d.maintenancePct / 100);
   var capexDollar = gri * (d.capexPct / 100);
   var mgmtDollar = egi * (d.management / 100);
@@ -425,7 +495,7 @@ function DealAnalyzer({ onTrack }) {
   var dscr = annMtg > 0 ? noi / annMtg : Infinity;
   var grm = gri > 0 ? d.purchasePrice / gri : 0;
   var expR = egi > 0 ? (totExp / egi) * 100 : 0;
-  var gc = function(m, v) { if (m === "cap") return v >= 8 ? "#16a34a" : v >= 6 ? B.greenLight : "#dc2626"; if (m === "coc") return v >= 10 ? "#16a34a" : v >= 6 ? B.greenLight : "#dc2626"; if (m === "dscr") return v >= 1.25 ? "#16a34a" : v >= 1.0 ? B.greenLight : "#dc2626"; if (m === "cf") return v >= 200 ? "#16a34a" : v >= 100 ? B.greenLight : "#dc2626"; return B.white; };
+  var gc = function(m, v) { if (m === "cap") return v >= 8 ? "var(--b-pos)" : v >= 6 ? B.greenLight : "var(--b-neg)"; if (m === "coc") return v >= 10 ? "var(--b-pos)" : v >= 6 ? B.greenLight : "var(--b-neg)"; if (m === "dscr") return v >= 1.25 ? "var(--b-pos)" : v >= 1.0 ? B.greenLight : "var(--b-neg)"; if (m === "cf") return v >= 200 ? "var(--b-pos)" : v >= 100 ? B.greenLight : "var(--b-neg)"; return B.white; };
   var proj = Array.from({ length: 5 }, function(_, i) { var y = i + 1; return { y: y, v: d.purchasePrice * Math.pow(1.03, y), n: noi * Math.pow(1.03, y), c: noi * Math.pow(1.03, y) - annMtg }; });
 
   // ---- FLIP CALCS ----
@@ -492,7 +562,10 @@ function DealAnalyzer({ onTrack }) {
       rows = [
         ["---", "PROPERTY"], ["Address", d.address || "\u2014"], ["Units", d.units.toString()], ["Purchase Price", fmtD(d.purchasePrice)], ["Strategy", stratLabel],
         ["---", "FINANCING"], ["Down Payment", fmtD(dp) + " (" + d.downPct + "%)"], ["Loan Amount", fmtD(loan)], ["Rate / Term", d.rate + "% / " + d.term + " yr"], ["Monthly Mortgage", fmtD(mtg)],
-        ["---", "INCOME"], ["Gross Revenue (Annual)", fmtD(gri)], ["Effective Gross Income", fmtD(egi)],
+        ["---", "INCOME"],
+        ["Gross Revenue (Annual)", fmtD(gri)],
+        [incomeDeductionLabel, "(" + fmtD(incomeDeductionDollar) + ")"],
+        ["Effective Gross Income", fmtD(egi)],
         ["---", "EXPENSES (ANNUAL)"],
         ["Taxes", fmtD(d.taxes)],
         ["Insurance", fmtD(d.insurance)],
@@ -542,18 +615,18 @@ function DealAnalyzer({ onTrack }) {
         <ActionBtn label="Save Analysis" onClick={handleSave} primary />
         <ActionBtn label={"My Saved (" + savedDeals.length + ")"} onClick={function() { setShowSaved(!showSaved); }} />
         <ActionBtn label="Export PDF" onClick={handleExportPDF} />
-        {saveMsg && <span style={{ fontSize: 12, color: "#16a34a", fontWeight: 600 }}>{saveMsg}</span>}
+        {saveMsg && <span style={{ fontSize: 12, color: "var(--b-pos)", fontWeight: 600 }}>{saveMsg}</span>}
       </div>
       {showSaved && savedDeals.length > 0 && (
         <div style={{ ...pStyle, marginBottom: 18, maxHeight: 200, overflowY: "auto" }}>
           {pH("Saved Analyses")}
           {savedDeals.map(function(s) { return (
-            <div key={s.id} style={{ display: "flex", justifyContent: "space-between", alignItems: "center", padding: "6px 0", borderBottom: "1px solid rgba(0,0,0,0.05)" }}>
+            <div key={s.id} style={{ display: "flex", justifyContent: "space-between", alignItems: "center", padding: "6px 0", borderBottom: "1px solid var(--b-subtle)" }}>
               <div style={{ cursor: "pointer", flex: 1 }} onClick={function() { handleLoad(s); }}>
                 <div style={{ fontSize: 13, color: B.white, fontWeight: 600 }}>{s.label}</div>
                 <div style={{ fontSize: 10, color: B.grayMuted }}>{(s.strategy || "").toUpperCase()} · {new Date(s.savedAt).toLocaleDateString()}</div>
               </div>
-              <button onClick={function() { handleDelete(s.id); }} style={{ fontSize: 11, color: "#dc2626", background: "none", border: "none", cursor: "pointer", padding: "4px 8px" }}>✕</button>
+              <button onClick={function() { handleDelete(s.id); }} style={{ fontSize: 11, color: "var(--b-neg)", background: "none", border: "none", cursor: "pointer", padding: "4px 8px" }}>✕</button>
             </div>
           ); })}
         </div>
@@ -589,17 +662,17 @@ function DealAnalyzer({ onTrack }) {
           <div>
             {sLabel("Key Metrics")}
             <div style={{ display: "flex", flexWrap: "wrap", gap: 8, marginBottom: 14 }}>
-              <StatCard label="Est. Profit" value={fmtD(flipProfit)} accent={flipProfit >= 0 ? "#16a34a" : "#dc2626"} />
-              <StatCard label="ROI" value={fmtP(flipRoi)} accent={flipRoi >= 15 ? "#16a34a" : flipRoi >= 0 ? B.greenLight : "#dc2626"} />
+              <StatCard label="Est. Profit" value={fmtD(flipProfit)} accent={flipProfit >= 0 ? "var(--b-pos)" : "var(--b-neg)"} />
+              <StatCard label="ROI" value={fmtP(flipRoi)} accent={flipRoi >= 15 ? "var(--b-pos)" : flipRoi >= 0 ? B.greenLight : "var(--b-neg)"} />
             </div>
             <div style={{ display: "flex", flexWrap: "wrap", gap: 8, marginBottom: 14 }}>
-              <StatCard label="Annualized ROI" value={fmtP(flipAnnRoi)} accent={flipAnnRoi >= 30 ? "#16a34a" : B.greenLight} />
-              <StatCard label="Max Offer (MAO)" value={fmtD(flipMao)} accent={d.purchasePrice <= flipMao ? "#16a34a" : "#dc2626"} />
+              <StatCard label="Annualized ROI" value={fmtP(flipAnnRoi)} accent={flipAnnRoi >= 30 ? "var(--b-pos)" : B.greenLight} />
+              <StatCard label="Max Offer (MAO)" value={fmtD(flipMao)} accent={d.purchasePrice <= flipMao ? "var(--b-pos)" : "var(--b-neg)"} />
             </div>
 
             <div style={{ background: d.purchasePrice <= flipMao ? "rgba(74,222,128,0.08)" : "rgba(239,68,68,0.08)", border: "1px solid " + (d.purchasePrice <= flipMao ? "rgba(74,222,128,0.25)" : "rgba(239,68,68,0.25)"), borderRadius: 10, padding: 14, marginBottom: 14 }}>
-              <div style={{ fontSize: 10, fontWeight: 700, textTransform: "uppercase", letterSpacing: 1.5, marginBottom: 6, color: d.purchasePrice <= flipMao ? "#16a34a" : "#dc2626" }}>{d.purchasePrice <= flipMao ? "Purchase is at or below MAO" : "Purchase exceeds MAO"}</div>
-              <div style={{ fontSize: 13, color: B.white, fontWeight: 600 }}>{d.flipMaoPct}% × {fmtD(d.flipArv)} − {fmtD(d.flipRehab)} = <span style={{ color: "#16a34a" }}>{fmtD(flipMao)}</span></div>
+              <div style={{ fontSize: 10, fontWeight: 700, textTransform: "uppercase", letterSpacing: 1.5, marginBottom: 6, color: d.purchasePrice <= flipMao ? "var(--b-pos)" : "var(--b-neg)" }}>{d.purchasePrice <= flipMao ? "Purchase is at or below MAO" : "Purchase exceeds MAO"}</div>
+              <div style={{ fontSize: 13, color: B.white, fontWeight: 600 }}>{d.flipMaoPct}% × {fmtD(d.flipArv)} − {fmtD(d.flipRehab)} = <span style={{ color: "var(--b-pos)" }}>{fmtD(flipMao)}</span></div>
               <div style={{ fontSize: 11, color: B.grayText, marginTop: 4 }}>Your purchase: {fmtD(d.purchasePrice)} ({d.purchasePrice <= flipMao ? "within" : fmtD(d.purchasePrice - flipMao) + " over"} MAO)</div>
             </div>
 
@@ -660,12 +733,12 @@ function DealAnalyzer({ onTrack }) {
               <StatCard label="Cap Rate" value={fmtP(brrrrCapRate)} accent={gc("cap", brrrrCapRate)} />
             </div>
             <div style={{ display: "flex", flexWrap: "wrap", gap: 8, marginBottom: 14 }}>
-              <StatCard label="Cash-on-Cash" value={brrrrCoc === Infinity ? "\u221E" : fmtP(brrrrCoc)} accent={brrrrCoc >= 10 || brrrrCoc === Infinity ? "#16a34a" : B.greenLight} sub={brrrrCashLeftIn <= 0 ? "no cash left in" : undefined} />
-              <StatCard label="Monthly CF" value={fmtD(brrrrCf / 12)} accent={brrrrCf >= 0 ? "#16a34a" : "#dc2626"} />
+              <StatCard label="Cash-on-Cash" value={brrrrCoc === Infinity ? "\u221E" : fmtP(brrrrCoc)} accent={brrrrCoc >= 10 || brrrrCoc === Infinity ? "var(--b-pos)" : B.greenLight} sub={brrrrCashLeftIn <= 0 ? "no cash left in" : undefined} />
+              <StatCard label="Monthly CF" value={fmtD(brrrrCf / 12)} accent={brrrrCf >= 0 ? "var(--b-pos)" : "var(--b-neg)"} />
             </div>
 
-            <div style={{ background: brrrrCashLeftIn <= 0 ? "rgba(74,222,128,0.08)" : "rgba(0,0,0,0.04)", border: "1px solid " + (brrrrCashLeftIn <= 0 ? "rgba(74,222,128,0.25)" : B.grayBorder), borderRadius: 10, padding: 14, marginBottom: 14 }}>
-              <div style={{ fontSize: 10, fontWeight: 700, textTransform: "uppercase", letterSpacing: 1.5, marginBottom: 6, color: brrrrCashLeftIn <= 0 ? "#16a34a" : B.grayText }}>{brrrrCashLeftIn <= 0 ? "Full cash recovery + " + fmtD(Math.abs(brrrrCashLeftIn)) + " pulled out" : fmtD(brrrrCashLeftIn) + " left in the deal"}</div>
+            <div style={{ background: brrrrCashLeftIn <= 0 ? "rgba(74,222,128,0.08)" : "var(--b-subtle)", border: "1px solid " + (brrrrCashLeftIn <= 0 ? "rgba(74,222,128,0.25)" : B.grayBorder), borderRadius: 10, padding: 14, marginBottom: 14 }}>
+              <div style={{ fontSize: 10, fontWeight: 700, textTransform: "uppercase", letterSpacing: 1.5, marginBottom: 6, color: brrrrCashLeftIn <= 0 ? "var(--b-pos)" : B.grayText }}>{brrrrCashLeftIn <= 0 ? "Full cash recovery + " + fmtD(Math.abs(brrrrCashLeftIn)) + " pulled out" : fmtD(brrrrCashLeftIn) + " left in the deal"}</div>
               <div style={{ fontSize: 12, color: B.grayText }}>Total All-In: {fmtD(brrrrTotalAllIn)} | Refi Loan ({d.brrrrRefiLtv}% LTV): {fmtD(brrrrRefiLoan)}</div>
             </div>
 
@@ -759,9 +832,7 @@ function DealAnalyzer({ onTrack }) {
           <div style={pStyle}>
             {pH("P&L \u2014 " + (strategy === "ltr" ? "Long-Term" : strategy === "str" ? "Short-Term" : "Mid-Term"))}
             {rw("Gross Revenue", fmtD(gri))}
-            {strategy === "str" && rw("Platform Fees (" + d.platformFeePct + "%)", "(" + fmtD(gri * d.platformFeePct / 100) + ")")}
-            {strategy === "mtr" && rw("Platform Fees (" + d.mtrPlatformPct + "%)", "(" + fmtD(gri * d.mtrPlatformPct / 100) + ")")}
-            {strategy === "ltr" && rw("Vacancy (" + d.vacancy + "%)", "(" + fmtD(gri - egi) + ")")}
+            {rw(incomeDeductionLabel, "(" + fmtD(incomeDeductionDollar) + ")")}
             {rw("Effective Gross Income", fmtD(egi))}
             {rw("Maintenance (" + d.maintenancePct + "%)", "(" + fmtD(maintenanceDollar) + ")")}
             {rw("CapEx (" + d.capexPct + "%)", "(" + fmtD(capexDollar) + ")")}
@@ -795,7 +866,7 @@ function DealAnalyzer({ onTrack }) {
             {pH("5-Year Projection")}
             <div style={{ display: "grid", gridTemplateColumns: "36px 1fr 1fr 1fr", gap: "3px 10px", fontSize: 11 }}>
               <span style={{ color: B.grayMuted, fontWeight: 700 }}>Yr</span><span style={{ color: B.grayMuted, fontWeight: 700 }}>Value</span><span style={{ color: B.grayMuted, fontWeight: 700 }}>NOI</span><span style={{ color: B.grayMuted, fontWeight: 700 }}>Cashflow</span>
-              {proj.map(function(p) { return (<div key={p.y} style={{display:"contents"}}><span style={{ color: B.grayText }}>{p.y}</span><span style={{ color: B.white }}>{fmtC(p.v)}</span><span style={{ color: B.greenLight }}>{fmtC(p.n)}</span><span style={{ color: p.c >= 0 ? "#16a34a" : "#dc2626" }}>{fmtC(p.c)}</span></div>); })}
+              {proj.map(function(p) { return (<div key={p.y} style={{display:"contents"}}><span style={{ color: B.grayText }}>{p.y}</span><span style={{ color: B.white }}>{fmtC(p.v)}</span><span style={{ color: B.greenLight }}>{fmtC(p.n)}</span><span style={{ color: p.c >= 0 ? "var(--b-pos)" : "var(--b-neg)" }}>{fmtC(p.c)}</span></div>); })}
             </div>
             <div style={{ fontSize: 9, color: B.grayMuted, marginTop: 6 }}>Assumes 3% appreciation, 3% rent growth</div>
           </div>
@@ -815,7 +886,7 @@ function MarketSnapshots({ onTrack }) {
   const [comp, setComp] = useState(["Albany", "Troy", ""]);
   var towns = Object.keys(MARKET_DATA).sort();
   var m = MARKET_DATA[sel];
-  var rc = function(r) { if (r.startsWith("A")) return "#16a34a"; if (r.startsWith("B")) return B.greenLight; if (r.startsWith("C")) return "#f59e0b"; return "#dc2626"; };
+  var rc = function(r) { if (r.startsWith("A")) return "var(--b-pos)"; if (r.startsWith("B")) return B.greenLight; if (r.startsWith("C")) return "#f59e0b"; return "var(--b-neg)"; };
 
   var compMetrics = [
     { key: "medianPrice", label: "Median Price", fmt: fmtC, higher: false },
@@ -841,7 +912,7 @@ function MarketSnapshots({ onTrack }) {
       ["YoY Appreciation", "+" + fmtP(m.yoyAppreciation), "green"], ["Vacancy Rate", fmtP(m.vacancyRate)], ["Median HH Income", fmtD(m.medianHHIncome)],
       ["Walk Score", m.walkScore + " / 100"], ["School District", m.schoolDistrict], ["School Grade", m.schoolRating],
     ];
-    exportPDF("Market Intel \u2014 " + sel, rows, m.description);
+    exportPDF("Market Intel \u2014 " + sel, rows, m.description, FAIR_HOUSING_NOTICE);
     if (onTrack) onTrack("pdf_exported", "Market Intel | " + sel);
   };
 
@@ -852,7 +923,7 @@ function MarketSnapshots({ onTrack }) {
       var vals = compTowns.map(function(t) { return met.fmt(MARKET_DATA[t][met.key]); });
       rows.push([met.label, vals.join("  |  ")]);
     });
-    exportPDF("Town Comparison", rows, compTowns.join(" vs "));
+    exportPDF("Town Comparison", rows, compTowns.join(" vs "), FAIR_HOUSING_NOTICE);
     if (onTrack) onTrack("town_compared", compTowns.join(" vs "));
   };
 
@@ -871,7 +942,7 @@ function MarketSnapshots({ onTrack }) {
             <div key={idx} style={{ minWidth: 160, flex: 1 }}>
               <label style={{ display: "block", fontSize: 10, fontWeight: 700, color: B.grayText, marginBottom: 4, letterSpacing: 1, textTransform: "uppercase" }}>Town {idx + 1}{idx === 2 ? " (optional)" : ""}</label>
               <select value={comp[idx]} onChange={function(e) { var next = comp.slice(); next[idx] = e.target.value; setComp(next); }}
-                style={{ width: "100%", padding: "10px 12px", fontSize: 14, background: "rgba(0,0,0,0.05)", border: "1px solid rgba(27,72,18,0.25)", borderRadius: 8, color: B.white, fontFamily: "'DM Sans', sans-serif" }}>
+                style={{ width: "100%", padding: "10px 12px", fontSize: 14, background: "var(--b-subtle)", border: "1px solid rgba(27,72,18,0.25)", borderRadius: 8, color: B.white, fontFamily: "'DM Sans', sans-serif" }}>
                 {idx === 2 && <option value="">\u2014 None \u2014</option>}
                 {towns.map(function(t) { return <option key={t} value={t}>{t}</option>; })}
               </select>
@@ -901,13 +972,14 @@ function MarketSnapshots({ onTrack }) {
                       {compTowns.map(function(t) {
                         var v = MARKET_DATA[t][met.key];
                         var isBest = bestVal !== null && Number(v) === bestVal && compTowns.length > 1;
-                        return <td key={t} style={{ textAlign: "right", padding: "8px 14px", fontWeight: 600, color: isBest ? "#16a34a" : B.white }}>{met.fmt(v)}</td>;
+                        return <td key={t} style={{ textAlign: "right", padding: "8px 14px", fontWeight: 600, color: isBest ? "var(--b-pos)" : B.white }}>{met.fmt(v)}</td>;
                       })}
                     </tr>
                   );
                 })}
               </tbody>
             </table>
+            <FairHousingNotice style={{ padding: "0 14px 12px 14px" }} />
             <div style={{ marginTop: 16 }}>
               {compTowns.map(function(t) { return (
                 <div key={t} style={{ ...pStyle, padding: 12 }}>
@@ -941,15 +1013,15 @@ function MarketSnapshots({ onTrack }) {
       </div>
       <div style={{ display: "flex", flexWrap: "wrap", gap: 8, marginBottom: 14 }}>
         <StatCard label="Median Price" value={fmtC(m.medianPrice)} />
-        <StatCard label="Avg Cap Rate" value={fmtP(m.capRate)} accent={m.capRate >= 8 ? "#16a34a" : m.capRate >= 6 ? B.greenLight : "#dc2626"} />
+        <StatCard label="Avg Cap Rate" value={fmtP(m.capRate)} accent={m.capRate >= 8 ? "var(--b-pos)" : m.capRate >= 6 ? B.greenLight : "var(--b-neg)"} />
         <StatCard label="Days on Market" value={m.daysOnMarket} />
         <StatCard label="Active Listings" value={m.inventoryCount} />
       </div>
       <div style={{ display: "flex", flexWrap: "wrap", gap: 8, marginBottom: 14 }}>
         <StatCard label="Avg 2BR Rent" value={fmtD(m.avgRent2Bed)} sub="/month" />
         <StatCard label="Avg 3BR Rent" value={fmtD(m.avgRent3Bed)} sub="/month" />
-        <StatCard label="Vacancy Rate" value={fmtP(m.vacancyRate)} accent={m.vacancyRate <= 5 ? "#16a34a" : B.greenLight} />
-        <StatCard label="YoY Growth" value={"+" + fmtP(m.yoyAppreciation)} accent="#16a34a" />
+        <StatCard label="Vacancy Rate" value={fmtP(m.vacancyRate)} accent={m.vacancyRate <= 5 ? "var(--b-pos)" : B.greenLight} />
+        <StatCard label="YoY Growth" value={"+" + fmtP(m.yoyAppreciation)} accent="var(--b-pos)" />
       </div>
       <div style={pStyle}>
         {pH("Demographics & Schools")}
@@ -959,6 +1031,7 @@ function MarketSnapshots({ onTrack }) {
         <div style={{ borderTop: "1px solid rgba(27,72,18,0.15)", marginTop: 6, paddingTop: 8 }}>
           <div style={{ display: "flex", justifyContent: "space-between", padding: "4px 0" }}><span style={{ fontSize: 12, color: B.grayText }}>School District</span><span style={{ fontSize: 12, color: B.white, fontWeight: 600 }}>{m.schoolDistrict}</span></div>
           <div style={{ display: "flex", justifyContent: "space-between", padding: "4px 0" }}><span style={{ fontSize: 12, color: B.grayText }}>Overall Grade</span><span style={{ fontSize: 12, color: rc(m.schoolRating), fontWeight: 700 }}>{m.schoolRating}</span></div>
+          <FairHousingNotice />
         </div>
       </div>
       <div style={pStyle}>
@@ -967,7 +1040,7 @@ function MarketSnapshots({ onTrack }) {
           var cr = MARKET_DATA[t].capRate; var mx = Math.max.apply(null, towns.map(function(x) { return MARKET_DATA[x].capRate; }));
           return (<div key={t} style={{ display: "flex", alignItems: "center", gap: 10, marginBottom: 5 }}>
             <span style={{ fontSize: 11, color: t === sel ? B.greenLight : B.grayText, width: 130, fontWeight: t === sel ? 700 : 400, flexShrink: 0 }}>{t}</span>
-            <div style={{ flex: 1, height: 7, background: "rgba(0,0,0,0.05)", borderRadius: 4, overflow: "hidden" }}><div style={{ width: (cr / mx * 100) + "%", height: "100%", background: t === sel ? B.green : "rgba(27,72,18,0.35)", borderRadius: 4, transition: "width 0.5s ease" }} /></div>
+            <div style={{ flex: 1, height: 7, background: "var(--b-subtle)", borderRadius: 4, overflow: "hidden" }}><div style={{ width: (cr / mx * 100) + "%", height: "100%", background: t === sel ? B.green : "rgba(27,72,18,0.35)", borderRadius: 4, transition: "width 0.5s ease" }} /></div>
             <span style={{ fontSize: 11, color: t === sel ? B.greenLight : B.grayText, width: 40, textAlign: "right", fontWeight: 700 }}>{fmtP(cr)}</span>
           </div>);
         })}
@@ -1061,18 +1134,18 @@ function EquityEstimator({ onTrack }) {
         <ActionBtn label="Save Property" onClick={handleSave} primary />
         <ActionBtn label={"My Properties (" + savedEquities.length + ")"} onClick={function() { setShowSaved(!showSaved); }} />
         <ActionBtn label="Export PDF" onClick={handleExportPDF} />
-        {saveMsg && <span style={{ fontSize: 12, color: "#16a34a", fontWeight: 600 }}>{saveMsg}</span>}
+        {saveMsg && <span style={{ fontSize: 12, color: "var(--b-pos)", fontWeight: 600 }}>{saveMsg}</span>}
       </div>
       {showSaved && savedEquities.length > 0 && (
         <div style={{ ...pStyle, marginBottom: 18, maxHeight: 200, overflowY: "auto" }}>
           {pH("Saved Properties")}
           {savedEquities.map(function(s) { return (
-            <div key={s.id} style={{ display: "flex", justifyContent: "space-between", alignItems: "center", padding: "6px 0", borderBottom: "1px solid rgba(0,0,0,0.05)" }}>
+            <div key={s.id} style={{ display: "flex", justifyContent: "space-between", alignItems: "center", padding: "6px 0", borderBottom: "1px solid var(--b-subtle)" }}>
               <div style={{ cursor: "pointer", flex: 1 }} onClick={function() { handleLoad(s); }}>
                 <div style={{ fontSize: 13, color: B.white, fontWeight: 600 }}>{s.label}</div>
                 <div style={{ fontSize: 10, color: B.grayMuted }}>{new Date(s.savedAt).toLocaleDateString()}</div>
               </div>
-              <button onClick={function() { handleDelete(s.id); }} style={{ fontSize: 11, color: "#dc2626", background: "none", border: "none", cursor: "pointer", padding: "4px 8px" }}>✕</button>
+              <button onClick={function() { handleDelete(s.id); }} style={{ fontSize: 11, color: "var(--b-neg)", background: "none", border: "none", cursor: "pointer", padding: "4px 8px" }}>✕</button>
             </div>
           ); })}
         </div>
@@ -1108,18 +1181,18 @@ function EquityEstimator({ onTrack }) {
         </div>
         <div>
           {sLabel("Equity Position")}
-          <div style={{ display: "flex", flexWrap: "wrap", gap: 8, marginBottom: 14 }}><StatCard label="Est. Value" value={fmtC(estVal)} /><StatCard label="Total Equity" value={fmtC(eq)} accent="#16a34a" /></div>
+          <div style={{ display: "flex", flexWrap: "wrap", gap: 8, marginBottom: 14 }}><StatCard label="Est. Value" value={fmtC(estVal)} /><StatCard label="Total Equity" value={fmtC(eq)} accent="var(--b-pos)" /></div>
 
           <div style={{ background: "rgba(27,72,18,0.08)", border: "1px solid rgba(27,72,18,0.2)", borderRadius: 8, padding: 12, marginBottom: 14 }}>
             <div style={{ fontSize: 10, color: B.greenLight, textTransform: "uppercase", letterSpacing: 1.5, marginBottom: 6, fontWeight: 700 }}>How is Est. Value calculated?</div>
             <p style={{ fontSize: 12, color: B.grayText, margin: 0, lineHeight: 1.6 }}>We apply 5.5% annual appreciation (the Capital Region average) to your original purchase price, compounded over the number of years you've owned the property.</p>
-            <div style={{ fontSize: 12, color: B.white, fontWeight: 600, marginTop: 8, fontFamily: "'DM Sans', monospace", background: "rgba(0,0,0,0.05)", padding: "6px 10px", borderRadius: 6 }}>
-              {fmtD(d.purchasePrice)} × (1.055)<sup>{yrs}</sup> = <span style={{ color: "#16a34a" }}>{fmtD(estVal)}</span>
+            <div style={{ fontSize: 12, color: B.white, fontWeight: 600, marginTop: 8, fontFamily: "'DM Sans', monospace", background: "var(--b-subtle)", padding: "6px 10px", borderRadius: 6 }}>
+              {fmtD(d.purchasePrice)} × (1.055)<sup>{yrs}</sup> = <span style={{ color: "var(--b-pos)" }}>{fmtD(estVal)}</span>
             </div>
             <p style={{ fontSize: 10, color: B.grayMuted, margin: "6px 0 0 0" }}>This is an estimate. For a precise current value, request a comparative market analysis (CMA) from Ethan.</p>
           </div>
 
-          <div style={pStyle}>{pH("Equity vs. Debt")}<div style={{ height: 14, background: "rgba(0,0,0,0.05)", borderRadius: 7, overflow: "hidden", marginBottom: 6 }}><div style={{ width: Math.max(0, Math.min(100, eqPct)) + "%", height: "100%", background: "linear-gradient(90deg, " + B.green + ", #4ade80)", borderRadius: 7, transition: "width 0.5s" }} /></div><div style={{ display: "flex", justifyContent: "space-between", fontSize: 11 }}><span style={{ color: "#16a34a" }}>Equity: {fmtP(eqPct)}</span><span style={{ color: B.grayText }}>Debt: {fmtP(100 - eqPct)}</span></div></div>
+          <div style={pStyle}>{pH("Equity vs. Debt")}<div style={{ height: 14, background: "var(--b-subtle)", borderRadius: 7, overflow: "hidden", marginBottom: 6 }}><div style={{ width: Math.max(0, Math.min(100, eqPct)) + "%", height: "100%", background: "linear-gradient(90deg, " + B.green + ", var(--b-pos))", borderRadius: 7, transition: "width 0.5s" }} /></div><div style={{ display: "flex", justifyContent: "space-between", fontSize: 11 }}><span style={{ color: "var(--b-pos)" }}>Equity: {fmtP(eqPct)}</span><span style={{ color: B.grayText }}>Debt: {fmtP(100 - eqPct)}</span></div></div>
 
           <div style={pStyle}>
             {pH("Monthly P&L")}
@@ -1140,7 +1213,7 @@ function EquityEstimator({ onTrack }) {
             <div style={{ fontSize: 10, color: B.greenLight, textTransform: "uppercase", letterSpacing: 1.5, marginBottom: 8, fontWeight: 700 }}>Cash-Out Refi (75% LTV)</div>
             {[["New Loan", fmtD(refiLoan)], ["Cash Out", fmtD(Math.max(0, cashOut))], ["New Payment", fmtD(refiPmt) + "/mo"], ["Net CF After Refi", fmtD(d.rent - totalMonthlyExp - refiPmt) + "/mo"]].map(function(pair, i) { return (<div key={i} style={{ display: "flex", justifyContent: "space-between", padding: "4px 0" }}><span style={{ fontSize: 12, color: B.greenLight }}>{pair[0]}</span><span style={{ fontSize: 12, color: B.white, fontWeight: 700 }}>{pair[1]}</span></div>); })}
           </div>
-          {eq > 100000 && <div style={{ background: "rgba(74,222,128,0.06)", border: "1px solid rgba(74,222,128,0.15)", borderRadius: 10, padding: 14 }}><div style={{ fontSize: 11, fontWeight: 700, color: "#16a34a", marginBottom: 4 }}>1031 Exchange Opportunity</div><p style={{ fontSize: 12, color: B.grayText, margin: 0, lineHeight: 1.5 }}>With {fmtC(eq)} in equity, you may qualify for a 1031 exchange into a larger property. Let's talk strategy.</p></div>}
+          {eq > 100000 && <div style={{ background: "rgba(74,222,128,0.06)", border: "1px solid rgba(74,222,128,0.15)", borderRadius: 10, padding: 14 }}><div style={{ fontSize: 11, fontWeight: 700, color: "var(--b-pos)", marginBottom: 4 }}>1031 Exchange Opportunity</div><p style={{ fontSize: 12, color: B.grayText, margin: 0, lineHeight: 1.5 }}>With {fmtC(eq)} in equity, you may qualify for a 1031 exchange into a larger property. Let's talk strategy.</p></div>}
         </div>
       </div>
     </div>
@@ -1215,18 +1288,18 @@ function PortfolioDashboard({ onTrack }) {
               {sLabel("Portfolio Summary")}
               <div style={{ display: "flex", flexWrap: "wrap", gap: 8, marginBottom: 20 }}>
                 <StatCard label="Total Est. Value" value={fmtC(totalValue)} />
-                <StatCard label="Total Equity" value={fmtC(totalEquity)} accent="#16a34a" />
-                <StatCard label="Total Annual CF" value={fmtD(totalCashflow)} accent={totalCashflow >= 0 ? "#16a34a" : "#dc2626"} />
+                <StatCard label="Total Equity" value={fmtC(totalEquity)} accent="var(--b-pos)" />
+                <StatCard label="Total Annual CF" value={fmtD(totalCashflow)} accent={totalCashflow >= 0 ? "var(--b-pos)" : "var(--b-neg)"} />
                 <StatCard label="Total Debt" value={fmtC(totalDebt)} />
               </div>
               {totalValue > 0 && (
                 <div style={{ ...pStyle, marginBottom: 20 }}>
                   {pH("Equity vs. Debt")}
-                  <div style={{ height: 14, background: "rgba(0,0,0,0.05)", borderRadius: 7, overflow: "hidden", marginBottom: 6 }}>
-                    <div style={{ width: Math.max(0, Math.min(100, (totalEquity / totalValue) * 100)) + "%", height: "100%", background: "linear-gradient(90deg, " + B.green + ", #4ade80)", borderRadius: 7 }} />
+                  <div style={{ height: 14, background: "var(--b-subtle)", borderRadius: 7, overflow: "hidden", marginBottom: 6 }}>
+                    <div style={{ width: Math.max(0, Math.min(100, (totalEquity / totalValue) * 100)) + "%", height: "100%", background: "linear-gradient(90deg, " + B.green + ", var(--b-pos))", borderRadius: 7 }} />
                   </div>
                   <div style={{ display: "flex", justifyContent: "space-between", fontSize: 11 }}>
-                    <span style={{ color: "#16a34a" }}>Equity: {fmtP((totalEquity / totalValue) * 100)}</span>
+                    <span style={{ color: "var(--b-pos)" }}>Equity: {fmtP((totalEquity / totalValue) * 100)}</span>
                     <span style={{ color: B.grayText }}>Debt: {fmtP((totalDebt / totalValue) * 100)}</span>
                   </div>
                 </div>
@@ -1248,8 +1321,8 @@ function PortfolioDashboard({ onTrack }) {
                       </div>
                       <div style={{ display: "flex", gap: 20, flexWrap: "wrap" }}>
                         <div><div style={{ fontSize: 10, color: B.grayMuted, textTransform: "uppercase", letterSpacing: 1 }}>Est. Value</div><div style={{ fontSize: 16, fontWeight: 700, color: B.white, fontFamily: "'Bebas Neue', sans-serif" }}>{fmtC(val)}</div></div>
-                        <div><div style={{ fontSize: 10, color: B.grayMuted, textTransform: "uppercase", letterSpacing: 1 }}>Equity</div><div style={{ fontSize: 16, fontWeight: 700, color: "#16a34a", fontFamily: "'Bebas Neue', sans-serif" }}>{fmtC(equity)}</div></div>
-                        <div><div style={{ fontSize: 10, color: B.grayMuted, textTransform: "uppercase", letterSpacing: 1 }}>Annual CF</div><div style={{ fontSize: 16, fontWeight: 700, color: cf >= 0 ? "#16a34a" : "#dc2626", fontFamily: "'Bebas Neue', sans-serif" }}>{fmtD(cf)}</div></div>
+                        <div><div style={{ fontSize: 10, color: B.grayMuted, textTransform: "uppercase", letterSpacing: 1 }}>Equity</div><div style={{ fontSize: 16, fontWeight: 700, color: "var(--b-pos)", fontFamily: "'Bebas Neue', sans-serif" }}>{fmtC(equity)}</div></div>
+                        <div><div style={{ fontSize: 10, color: B.grayMuted, textTransform: "uppercase", letterSpacing: 1 }}>Annual CF</div><div style={{ fontSize: 16, fontWeight: 700, color: cf >= 0 ? "var(--b-pos)" : "var(--b-neg)", fontFamily: "'Bebas Neue', sans-serif" }}>{fmtD(cf)}</div></div>
                         <div><div style={{ fontSize: 10, color: B.grayMuted, textTransform: "uppercase", letterSpacing: 1 }}>Debt</div><div style={{ fontSize: 16, fontWeight: 700, color: B.white, fontFamily: "'Bebas Neue', sans-serif" }}>{fmtC(p.bal || 0)}</div></div>
                       </div>
                     </div>
@@ -1411,14 +1484,14 @@ function DealComparison({ onTrack }) {
           <div style={{ display: "flex", gap: 14, marginBottom: 20 }}>
             <div style={{ flex: 1 }}>
               <label style={{ display: "block", fontSize: 10, fontWeight: 700, color: B.grayText, marginBottom: 4, letterSpacing: 1, textTransform: "uppercase" }}>Analysis A</label>
-              <select value={selA} onChange={function(e) { setSelA(e.target.value); }} style={{ width: "100%", padding: "10px 12px", fontSize: 14, background: "rgba(0,0,0,0.05)", border: "1px solid rgba(27,72,18,0.25)", borderRadius: 8, color: B.white, fontFamily: "'DM Sans', sans-serif" }}>
+              <select value={selA} onChange={function(e) { setSelA(e.target.value); }} style={{ width: "100%", padding: "10px 12px", fontSize: 14, background: "var(--b-subtle)", border: "1px solid rgba(27,72,18,0.25)", borderRadius: 8, color: B.white, fontFamily: "'DM Sans', sans-serif" }}>
                 <option value="">{"\u2014 Select \u2014"}</option>
                 {allItems.map(function(item) { return <option key={item.id} value={String(item.id)}>{item.label} ({item._type})</option>; })}
               </select>
             </div>
             <div style={{ flex: 1 }}>
               <label style={{ display: "block", fontSize: 10, fontWeight: 700, color: B.grayText, marginBottom: 4, letterSpacing: 1, textTransform: "uppercase" }}>Analysis B</label>
-              <select value={selB} onChange={function(e) { setSelB(e.target.value); }} style={{ width: "100%", padding: "10px 12px", fontSize: 14, background: "rgba(0,0,0,0.05)", border: "1px solid rgba(27,72,18,0.25)", borderRadius: 8, color: B.white, fontFamily: "'DM Sans', sans-serif" }}>
+              <select value={selB} onChange={function(e) { setSelB(e.target.value); }} style={{ width: "100%", padding: "10px 12px", fontSize: 14, background: "var(--b-subtle)", border: "1px solid rgba(27,72,18,0.25)", borderRadius: 8, color: B.white, fontFamily: "'DM Sans', sans-serif" }}>
                 <option value="">{"\u2014 Select \u2014"}</option>
                 {allItems.map(function(item) { return <option key={item.id} value={String(item.id)}>{item.label} ({item._type})</option>; })}
               </select>
@@ -1474,7 +1547,7 @@ function ActivityLog() {
   };
   var intentColor = function(a) {
     var high = ["deal_saved", "equity_saved", "pdf_exported", "comparison_run", "portfolio_viewed", "town_compared", "deal_loaded", "equity_loaded"];
-    if (high.indexOf(a) >= 0) return "#16a34a";
+    if (high.indexOf(a) >= 0) return "var(--b-pos)";
     return B.grayText;
   };
 
@@ -1528,7 +1601,7 @@ function ActivityLog() {
       <div style={{ display: "flex", flexWrap: "wrap", gap: 8, marginBottom: 16 }}>
         <StatCard label="Total Events" value={log.length.toString()} />
         <StatCard label="Unique Prospects" value={uniqueEmails.length.toString()} />
-        <StatCard label="High-Intent Actions" value={highIntentCount.toString()} accent="#16a34a" />
+        <StatCard label="High-Intent Actions" value={highIntentCount.toString()} accent="var(--b-pos)" />
       </div>
 
       {sourceBreakdown.length > 0 && (
@@ -1536,7 +1609,7 @@ function ActivityLog() {
           {pH("Traffic Sources (UTM)")}
           <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(140px, 1fr))", gap: 8 }}>
             {sourceBreakdown.map(function(s) { return (
-              <div key={s.source} style={{ background: "rgba(0,0,0,0.04)", borderRadius: 6, padding: "8px 10px", borderLeft: "2px solid " + (s.source === "direct" ? B.grayMuted : B.greenLight) }}>
+              <div key={s.source} style={{ background: "var(--b-subtle)", borderRadius: 6, padding: "8px 10px", borderLeft: "2px solid " + (s.source === "direct" ? B.grayMuted : B.greenLight) }}>
                 <div style={{ fontSize: 10, color: B.grayMuted, textTransform: "uppercase", letterSpacing: 1, fontWeight: 700 }}>{s.source}</div>
                 <div style={{ fontSize: 16, color: B.white, fontWeight: 700 }}>{s.count}</div>
                 <div style={{ fontSize: 9, color: B.grayText }}>{s.prospects} prospects</div>
@@ -1600,6 +1673,7 @@ function ActivityLog() {
 // ============================================
 export default function App() {
   const { user, isLoaded } = useUser();
+  const [theme, setTheme] = useTheme();
   const [tab, setTab] = useState("analyzer");
   const searchParams = useSearchParams();
 
@@ -1651,6 +1725,7 @@ export default function App() {
           <div style={{ display: "flex", alignItems: "center", gap: 14 }}><EmpireLogo size={32} /><div><div style={{ fontFamily: "'Bebas Neue', sans-serif", fontSize: 18, letterSpacing: 2, lineHeight: 1 }}>CAPITAL REGION INVESTOR HUB</div><div style={{ fontSize: 9, letterSpacing: 3, textTransform: "uppercase", color: B.green, fontWeight: 700 }}>Empire Real Estate Firm</div></div></div>
           <div style={{ display: "flex", alignItems: "center", gap: 16 }}>
             <div style={{ textAlign: "right" }}><div style={{ fontSize: 12, color: B.white, fontWeight: 600 }}>Ethan Harris</div><div style={{ fontSize: 10, color: B.grayMuted }}>Real Estate Salesperson · (518) 588-1122</div></div>
+            <ThemeToggle theme={theme} onChange={setTheme} />
             <SignOutButton>
               <button style={{ padding: "6px 14px", fontSize: 11, fontWeight: 600, borderRadius: 6, cursor: "pointer", border: "1px solid rgba(27,72,18,0.2)", background: "transparent", color: B.grayText, fontFamily: "'DM Sans', sans-serif" }}>Sign Out</button>
             </SignOutButton>
