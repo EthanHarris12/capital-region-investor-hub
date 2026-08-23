@@ -1,0 +1,73 @@
+@import "tailwindcss";
+
+/* ============================================
+   THEME TOKENS
+   Light is the default. Dark mode is opt-in via
+   <html data-theme="dark">, set by the header toggle.
+   Every token is defined on bare :root first so no
+   color exists only inside a media/attribute block.
+   ============================================ */
+:root {
+  --b-green: #1b4812;
+  --b-green-light: #2a6b1a;
+  --b-green-dark: #143a0d;
+
+  /* Surfaces: page gradient runs deep -> mid -> light */
+  --b-navy-deep: #f6f9f5;
+  --b-navy: #eef3ec;
+  --b-navy-light: #ffffff;
+
+  /* Type. --b-white is the primary text color (legacy name
+     from the original dark theme; kept so existing styles work). */
+  --b-white: #143a0d;
+  --b-gray-text: #47603f;
+  --b-gray-muted: #6b8163;
+
+  --b-gray-border: rgba(27, 72, 18, 0.14);
+  --b-green-glow: rgba(27, 72, 18, 0.15);
+  --b-subtle: rgba(27, 72, 18, 0.05);
+
+  /* Semantic status colors */
+  --b-pos: #16a34a;
+  --b-neg: #dc2626;
+
+  color-scheme: light;
+}
+
+:root[data-theme="dark"] {
+  --b-green: #2a6b1a;
+  --b-green-light: #7dd35f;
+  --b-green-dark: #0f2a0a;
+
+  --b-navy-deep: #0e1a12;
+  --b-navy: #16241a;
+  --b-navy-light: #1c2e21;
+
+  --b-white: #e8f5e4;
+  --b-gray-text: #a8c2a2;
+  --b-gray-muted: #8aa384;
+
+  --b-gray-border: rgba(255, 255, 255, 0.11);
+  --b-green-glow: rgba(125, 211, 95, 0.18);
+  --b-subtle: rgba(255, 255, 255, 0.06);
+
+  --b-pos: #4ade80;
+  --b-neg: #f87171;
+
+  color-scheme: dark;
+}
+
+body {
+  margin: 0;
+  background: var(--b-navy-deep);
+  color: var(--b-white);
+  font-family: 'DM Sans', -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto',
+    sans-serif;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+code {
+  font-family: source-code-pro, Menlo, Monaco, Consolas, 'Courier New',
+    monospace;
+}
