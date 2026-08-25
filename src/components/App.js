@@ -2,6 +2,8 @@
 import React, { useState, useEffect, useSyncExternalStore } from "react";
 import { useUser, SignOutButton } from "@clerk/nextjs";
 import { useSearchParams } from "next/navigation";
+import Link from "next/link";
+import { isAdminUser } from "@/lib/admin";
 
 // ============================================
 // CONFIG — Update these for your deployment
@@ -1686,6 +1688,7 @@ export default function App() {
 
   // Check for admin mode via URL param
   var isAdmin = searchParams.get("admin") === "true" || searchParams.get("admin") === "1";
+  var isStaff = isAdminUser(user);
 
   useEffect(function() {
     // Capture UTM parameters on landing (persists via localStorage for same-session attribution)
@@ -1725,6 +1728,11 @@ export default function App() {
           <div style={{ display: "flex", alignItems: "center", gap: 14 }}><EmpireLogo size={32} /><div><div style={{ fontFamily: "'Bebas Neue', sans-serif", fontSize: 18, letterSpacing: 2, lineHeight: 1 }}>CAPITAL REGION INVESTOR HUB</div><div style={{ fontSize: 9, letterSpacing: 3, textTransform: "uppercase", color: B.green, fontWeight: 700 }}>Empire Real Estate Firm</div></div></div>
           <div style={{ display: "flex", alignItems: "center", gap: 16 }}>
             <div style={{ textAlign: "right" }}><div style={{ fontSize: 12, color: B.white, fontWeight: 600 }}>Ethan Harris</div><div style={{ fontSize: 10, color: B.grayMuted }}>Real Estate Salesperson · (518) 588-1122</div></div>
+            {isStaff && (
+              <Link href="/advertise" style={{ padding: "6px 14px", fontSize: 11, fontWeight: 700, borderRadius: 6, border: "1px solid " + B.grayBorder, color: B.greenLight, textDecoration: "none", fontFamily: "'DM Sans', sans-serif" }}>
+                Studio
+              </Link>
+            )}
             <ThemeToggle theme={theme} onChange={setTheme} />
             <SignOutButton>
               <button style={{ padding: "6px 14px", fontSize: 11, fontWeight: 600, borderRadius: 6, cursor: "pointer", border: "1px solid rgba(27,72,18,0.2)", background: "transparent", color: B.grayText, fontFamily: "'DM Sans', sans-serif" }}>Sign Out</button>
