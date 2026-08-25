@@ -23,9 +23,11 @@ const STRATEGY_LABEL = { ltr: "Long-Term Rental", str: "Short-Term Rental", mtr:
 
 // ---- beat construction -------------------------------------------------
 
+const mo = (n) => fmtD(n / 12);
+
 function rentalBeats(d, strategy, m) {
   var addr = d.address || "This Property";
-  var beats = [
+  return [
     {
       key: "hook", kicker: "The Deal",
       headline: addr,
@@ -43,32 +45,54 @@ function rentalBeats(d, strategy, m) {
     {
       key: "income", kicker: "Money In",
       headline: "What it collects",
-      hero: fmtD(m.egi), heroLabel: "Effective gross income / yr",
-      rows: [["Gross revenue", fmtD(m.gri)], [m.deductionLabel, "− " + fmtD(m.deductionDollar)], ["Effective gross income", fmtD(m.egi)]],
-      say: "Call out that you are not using the gross number. Underwriting to full occupancy is the classic beginner mistake — this is where you show you don’t.",
+      hero: fmtD(m.egi), heroLabel: "Effective gross income / yr", heroMonthly: mo(m.egi) + " / mo",
+      dual: true,
+      rows: [
+        ["Gross revenue", fmtD(m.gri), mo(m.gri)],
+        [m.deductionLabel, "− " + fmtD(m.deductionDollar), "− " + mo(m.deductionDollar)],
+        ["Effective gross income", fmtD(m.egi), mo(m.egi)],
+      ],
+      say: "Give them the monthly number — that’s how people actually picture rent. Then point out you’re not using the gross figure; underwriting to full occupancy is the classic beginner mistake.",
     },
     {
       key: "expenses", kicker: "Money Out",
       headline: "What it costs to run",
-      hero: fmtD(m.totExp), heroLabel: "Operating expenses / yr",
-      rows: [["Taxes", fmtD(d.taxes)], ["Insurance", fmtD(d.insurance)], ["Maintenance (" + d.maintenancePct + "%)", fmtD(m.maintenanceDollar)], ["CapEx (" + d.capexPct + "%)", fmtD(m.capexDollar)]].concat(
-        d.management > 0 ? [["Management (" + d.management + "%)", fmtD(m.mgmtDollar)]] : []
+      hero: fmtD(m.totExp), heroLabel: "Operating expenses / yr", heroMonthly: mo(m.totExp) + " / mo",
+      dual: true,
+      rows: [
+        ["Taxes", fmtD(d.taxes), mo(d.taxes)],
+        ["Insurance", fmtD(d.insurance), mo(d.insurance)],
+        ["Maintenance (" + d.maintenancePct + "%)", fmtD(m.maintenanceDollar), mo(m.maintenanceDollar)],
+        ["CapEx (" + d.capexPct + "%)", fmtD(m.capexDollar), mo(m.capexDollar)],
+      ].concat(
+        d.management > 0 ? [["Management (" + d.management + "%)", fmtD(m.mgmtDollar), mo(m.mgmtDollar)]] : []
       ).concat(
-        (d.utilities > 0 || d.otherExp > 0) ? [["Utilities + other", fmtD(d.utilities * 12 + d.otherExp * 12)]] : []
-      ),
-      say: "CapEx is the line most people skip. Roofs and boilers are not optional — reserving for them is what separates a real proforma from a fantasy.",
+        (d.utilities > 0 || d.otherExp > 0) ? [["Utilities + other", fmtD(d.utilities * 12 + d.otherExp * 12), mo(d.utilities * 12 + d.otherExp * 12)]] : []
+      ).concat([["Total operating expenses", fmtD(m.totExp), mo(m.totExp)]]),
+      say: "CapEx is the line most people skip. Roofs and boilers are not optional — say the monthly reserve out loud, because that’s the number that makes it feel real.",
     },
     {
       key: "noi", kicker: "The Engine", headline: "Net operating income",
-      hero: fmtD(m.noi), heroLabel: "NOI / yr", tone: m.noi >= 0 ? "pos" : "neg",
-      rows: [["Effective gross income", fmtD(m.egi)], ["Operating expenses", "− " + fmtD(m.totExp)], ["NOI", fmtD(m.noi)]],
+      hero: fmtD(m.noi), heroLabel: "NOI / yr", heroMonthly: mo(m.noi) + " / mo", tone: m.noi >= 0 ? "pos" : "neg",
+      dual: true,
+      rows: [
+        ["Effective gross income", fmtD(m.egi), mo(m.egi)],
+        ["Operating expenses", "− " + fmtD(m.totExp), "− " + mo(m.totExp)],
+        ["NOI", fmtD(m.noi), mo(m.noi)],
+      ],
       say: "NOI is the property’s income before the bank gets paid. It’s the number that drives value — mention that NOI divided by cap rate is what an appraiser is doing.",
     },
     {
       key: "cashflow", kicker: "The Answer", headline: "What lands in your pocket",
-      hero: fmtD(m.cf), heroLabel: "Annual cash flow", tone: m.cf >= 0 ? "pos" : "neg",
-      rows: [["NOI", fmtD(m.noi)], ["Debt service", "− " + fmtD(m.annMtg)], ["Cash flow", fmtD(m.cf)], ["Per unit / month", fmtD(m.cfDoor)]],
-      say: "This is the payoff of the whole video. Pause here. Let the number sit before you say whether it’s good.",
+      hero: fmtD(m.cf), heroLabel: "Annual cash flow", heroMonthly: mo(m.cf) + " / mo", tone: m.cf >= 0 ? "pos" : "neg",
+      dual: true,
+      rows: [
+        ["NOI", fmtD(m.noi), mo(m.noi)],
+        ["Debt service", "− " + fmtD(m.annMtg), "− " + fmtD(m.mtg)],
+        ["Cash flow", fmtD(m.cf), mo(m.cf)],
+        ["Per unit", fmtD(m.cfDoor * 12), fmtD(m.cfDoor)],
+      ],
+      say: "This is the payoff of the whole video. Lead with the monthly number — “this property puts this much in your pocket every month.” Pause and let it sit.",
     },
     {
       key: "returns", kicker: "The Verdict", headline: "Does it work?",
@@ -77,7 +101,6 @@ function rentalBeats(d, strategy, m) {
       say: "Give your actual opinion. DSCR under 1.25 means most lenders get uncomfortable — say what you’d do: renegotiate, walk, or buy it.",
     },
   ];
-  return beats;
 }
 
 function flipBeats(d, m) {
@@ -106,8 +129,31 @@ function brrrrBeats(d, m) {
     { key: "refi", kicker: "The Refinance", headline: "Pulling your money back out", hero: fmtD(m.cashLeftIn), heroLabel: m.cashLeftIn <= 0 ? "Cash pulled out" : "Cash left in", tone: m.cashLeftIn <= 0 ? "pos" : undefined,
       rows: [["ARV", fmtD(d.brrrrArv)], ["Refi at " + d.brrrrRefiLtv + "% LTV", fmtD(m.refiLoan)], ["All-in", "− " + fmtD(m.totalAllIn)], ["New payment", fmtD(m.mtg) + "/mo"]],
       say: "This is the moment BRRRR lives or dies. If the appraisal comes in low, the whole model breaks — say what your backup plan is." },
-    { key: "cashflow", kicker: "After the Refi", headline: "Does it still cash flow?", hero: fmtD(m.cf), heroLabel: "Annual cash flow", tone: m.cf >= 0 ? "pos" : "neg",
-      rows: [["Effective gross income", fmtD(m.egi)], ["Operating expenses", "− " + fmtD(m.totOpex)], ["NOI", fmtD(m.noi)], ["Debt service", "− " + fmtD(m.annDebt)]],
+    { key: "income", kicker: "Money In", headline: "What it collects", hero: fmtD(m.egi), heroLabel: "Effective gross income / yr", heroMonthly: mo(m.egi) + " / mo",
+      dual: true,
+      rows: [
+        ["Gross rent", fmtD(m.gri), mo(m.gri)],
+        ["Vacancy (" + d.brrrrVacancy + "%)", "− " + fmtD(m.gri - m.egi), "− " + mo(m.gri - m.egi)],
+        ["Effective gross income", fmtD(m.egi), mo(m.egi)],
+      ],
+      say: "Give the monthly rent figure — that’s the number a viewer can picture collecting." },
+    { key: "expenses", kicker: "Money Out", headline: "What it costs to run", hero: fmtD(m.totOpex), heroLabel: "Operating expenses / yr", heroMonthly: mo(m.totOpex) + " / mo",
+      dual: true,
+      rows: [
+        ["Taxes", fmtD(d.brrrrTaxes), mo(d.brrrrTaxes)],
+        ["Insurance", fmtD(d.brrrrInsurance), mo(d.brrrrInsurance)],
+        ["Water / sewer", fmtD(d.brrrrWaterSewer), mo(d.brrrrWaterSewer)],
+        ["Maintenance + CapEx", fmtD(m.gri * (d.brrrrMaintPct + d.brrrrCapxPct) / 100), mo(m.gri * (d.brrrrMaintPct + d.brrrrCapxPct) / 100)],
+        ["Total operating expenses", fmtD(m.totOpex), mo(m.totOpex)],
+      ],
+      say: "Same point as always — the reserves are what make this a real proforma instead of a wish." },
+    { key: "cashflow", kicker: "After the Refi", headline: "Does it still cash flow?", hero: fmtD(m.cf), heroLabel: "Annual cash flow", heroMonthly: mo(m.cf) + " / mo", tone: m.cf >= 0 ? "pos" : "neg",
+      dual: true,
+      rows: [
+        ["NOI", fmtD(m.noi), mo(m.noi)],
+        ["Debt service", "− " + fmtD(m.annDebt), "− " + fmtD(m.mtg)],
+        ["Cash flow", fmtD(m.cf), mo(m.cf)],
+      ],
       say: "A bigger loan means a bigger payment. Plenty of BRRRRs pull all the cash out and leave you with a property that barely breaks even." },
     { key: "verdict", kicker: "The Verdict", headline: "Infinite return?",
       grid: [["Cash-on-cash", fmtP(m.coc), m.coc >= 8], ["DSCR", fmtX(m.dscr), m.dscr >= 1.25], ["Cap rate", fmtP(m.capRate), m.capRate >= 7], ["Cash left in", fmtD(m.cashLeftIn), m.cashLeftIn <= 0]],
@@ -512,8 +558,9 @@ export default function AdvertiseStudio() {
                   <h1 className="headline">{beat.headline}</h1>
 
                   {beat.hero ? (
-                    <div className={"hero" + (beat.tone === "pos" ? " pos" : beat.tone === "neg" ? " neg" : "") + (beat.heroSmall ? " small" : "")}>
+                    <div className={"hero" + (beat.tone === "pos" ? " pos" : beat.tone === "neg" ? " neg" : "") + (beat.heroSmall ? " small" : "") + (beat.heroMonthly ? " withmo" : "")}>
                       <div className="hero-val">{beat.hero}</div>
+                      {beat.heroMonthly ? <div className="hero-mo">{beat.heroMonthly}</div> : null}
                       <div className="hero-label">{beat.heroLabel}</div>
                     </div>
                   ) : null}
@@ -532,12 +579,21 @@ export default function AdvertiseStudio() {
                   ) : null}
 
                   {beat.rows ? (
-                    <div className="rows">
+                    <div className={"rows" + (beat.dual ? " dual" : "")}>
+                      {beat.dual ? (
+                        <div className="rw rw-head">
+                          <span />
+                          <span className="rw-v">Annual</span>
+                          <span className="rw-m">Monthly</span>
+                        </div>
+                      ) : null}
                       {beat.rows.map(function (r, i) {
+                        var isTotal = beat.dual && i === beat.rows.length - 1;
                         return (
-                          <div key={i} className="rw">
+                          <div key={i} className={"rw" + (isTotal ? " rw-total" : "")}>
                             <span className="rw-l">{r[0]}</span>
                             <span className="rw-v">{r[1]}</span>
+                            {beat.dual ? <span className="rw-m">{r[2] || ""}</span> : null}
                           </div>
                         );
                       })}
@@ -669,8 +725,12 @@ kbd { font-family: ui-monospace, Menlo, monospace; font-size: 10px; background: 
 .hero { display: flex; flex-direction: column; gap: .6cqh; }
 .hero-val { font-family: 'Bebas Neue', sans-serif; font-size: 13cqh; line-height: .86; letter-spacing: -1px; font-variant-numeric: tabular-nums; }
 .hero.small .hero-val { font-size: 5.4cqh; letter-spacing: 0; }
+.hero.withmo .hero-val { font-size: 9cqh; }
 .hero.pos .hero-val { color: var(--b-pos); }
 .hero.neg .hero-val { color: var(--b-neg); }
+.hero-mo { font-family: 'Bebas Neue', sans-serif; font-size: 5.6cqh; line-height: .95; color: var(--b-green-light); font-variant-numeric: tabular-nums; }
+.hero.pos .hero-mo { color: var(--b-pos); }
+.hero.neg .hero-mo { color: var(--b-neg); }
 .hero-label { font-size: 1.9cqh; font-weight: 600; letter-spacing: 1px; text-transform: uppercase; color: var(--b-gray-muted); }
 
 .grid { display: grid; grid-template-columns: 1fr 1fr; gap: 1.6cqh 1.6cqw; }
@@ -685,6 +745,17 @@ kbd { font-family: ui-monospace, Menlo, monospace; font-size: 10px; background: 
 .rw:last-child { border-bottom: none; }
 .rw-l { font-size: 2.1cqh; color: var(--b-gray-text); }
 .rw-v { font-size: 2.3cqh; font-weight: 700; font-variant-numeric: tabular-nums; text-align: right; }
+
+/* Annual and monthly side by side. Monthly is the column a viewer reads
+   first, so it gets the accent colour. */
+.rows.dual .rw { display: grid; grid-template-columns: minmax(0, 1fr) 26% 26%; gap: 1.4cqw; padding: 1.05cqh 0; }
+.rows.dual .rw-l { font-size: 2cqh; }
+.rows.dual .rw-m { font-size: 2.3cqh; font-weight: 700; font-variant-numeric: tabular-nums; text-align: right; color: var(--b-green-light); }
+.rw-head { padding-bottom: .7cqh; border-bottom: 1px solid var(--b-gray-border); }
+.rw-head .rw-v, .rw-head .rw-m { font-size: 1.4cqh; font-weight: 800; letter-spacing: 1.6px; text-transform: uppercase; color: var(--b-gray-muted); }
+.rw-total { border-bottom: none; margin-top: .5cqh; padding-top: 1.6cqh; border-top: 2px solid var(--b-gray-border); }
+.rw-total .rw-l { color: var(--b-white); font-weight: 700; }
+.rw-total .rw-v, .rw-total .rw-m { font-size: 2.7cqh; }
 
 .dots { display: flex; gap: .9cqw; justify-content: center; padding: 1.4cqh 0; flex-shrink: 0; }
 .dot { width: 1.1cqw; height: 1.1cqw; border-radius: 50%; background: var(--b-gray-border); }
