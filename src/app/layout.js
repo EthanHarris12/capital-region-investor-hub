@@ -148,7 +148,9 @@ export default function RootLayout({ children }) {
         },
       }}
     >
-      <html lang="en" className={dmSans.variable}>
+      {/* The inline script below sets data-theme before hydration, so the
+          server HTML and the client DOM differ on <html> by design. */}
+      <html lang="en" className={dmSans.variable} suppressHydrationWarning>
         <head>
           <script dangerouslySetInnerHTML={{ __html: noFlashTheme }} />
           {/* Google Analytics */}

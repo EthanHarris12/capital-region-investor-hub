@@ -227,8 +227,7 @@ export default function AdvertiseStudio() {
     try {
       var s = await navigator.mediaDevices.getUserMedia({ video: { width: { ideal: 1280 }, height: { ideal: 720 }, facingMode: "user" }, audio: false });
       streamRef.current = s;
-      if (videoRef.current) videoRef.current.srcObject = s;
-      setCamOn(true);
+      setCamOn(true);   // the effect below attaches the stream once <video> mounts
     } catch (e) {
       var name = e && e.name;
       setCamError(
@@ -239,6 +238,16 @@ export default function AdvertiseStudio() {
       );
     }
   }, []);
+
+  // Attach the stream after the <video> element is in the DOM. Re-runs on
+  // corner/size/shape changes too, since those remount the container.
+  useEffect(function () {
+    var el = videoRef.current;
+    if (!camOn || !el || !streamRef.current) return;
+    if (el.srcObject !== streamRef.current) el.srcObject = streamRef.current;
+    var p = el.play();
+    if (p && typeof p.catch === "function") p.catch(function () { /* autoplay guard */ });
+  }, [camOn, camCorner, camSize, camRound]);
 
   useEffect(function () { return function () { if (streamRef.current) streamRef.current.getTracks().forEach(function (t) { t.stop(); }); }; }, []);
 
