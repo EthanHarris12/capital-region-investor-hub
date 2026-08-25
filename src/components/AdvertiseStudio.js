@@ -3,6 +3,7 @@
 import React, { useState, useEffect, useRef, useCallback, useSyncExternalStore } from "react";
 import { useUser } from "@clerk/nextjs";
 import { computeRental, computeFlip, computeBrrrr } from "@/lib/dealMath";
+import { PHOTOS_KEY, dealPhotoKey, compressToDataUrl, isQuotaError } from "@/lib/photos";
 
 // ============================================
 // ADVERTISE STUDIO
@@ -115,6 +116,21 @@ function brrrrBeats(d, m) {
   ];
 }
 
+function photoBeats(photos, deal) {
+  return photos.map(function (src, i) {
+    return {
+      key: "photo" + i,
+      photo: src,
+      kicker: i === 0 ? "The Property" : "A Closer Look",
+      headline: deal.address || "This Property",
+      overline: i === 0 && deal.purchasePrice ? fmtD(deal.purchasePrice) : "",
+      say: i === 0
+        ? "Open here. Say the address and the price out loud, then promise the answer: “let’s see if it actually cash flows.” Hold this shot until you’ve said all three."
+        : "Keep it short — one detail worth pointing at, then move to the numbers.",
+    };
+  });
+}
+
 const CTA_BEAT = {
   key: "cta", kicker: "Your Turn", headline: "Run your own numbers",
   hero: "investcapitalregion.com", heroSmall: true, heroLabel: "Free deal analyzer",
@@ -153,7 +169,18 @@ function writeJSON(key, value) {
   listeners.forEach(function (l) { l(); });
 }
 
+// Same, but lets a quota failure reach the caller — losing a photo silently
+// is worse than saying the browser is full.
+function writeJSONOrThrow(key, value) {
+  var raw = JSON.stringify(value);
+  localStorage.setItem(key, raw);
+  cache[key] = { raw: raw, value: value };
+  listeners.forEach(function (l) { l(); });
+}
+
 const EMPTY_DEALS = [];
+const EMPTY_PHOTOS = {};
+const EMPTY_PHOTOS_ARR = [];
 const DEFAULT_PREFS = { camCorner: "br", camSize: "md", camRound: true, camMirror: true };
 
 // ---- component ---------------------------------------------------------
@@ -170,6 +197,11 @@ export default function AdvertiseStudio() {
     function () { return readJSON(PREFS_KEY, DEFAULT_PREFS); },
     function () { return DEFAULT_PREFS; }
   );
+  const photoMap = useSyncExternalStore(
+    subscribeStore,
+    function () { return readJSON(PHOTOS_KEY, EMPTY_PHOTOS); },
+    function () { return EMPTY_PHOTOS; }
+  );
 
   const [dealIdx, setDealIdx] = useState(0);
   const [beatIdx, setBeatIdx] = useState(0);
@@ -178,6 +210,9 @@ export default function AdvertiseStudio() {
 
   const [camOn, setCamOn] = useState(false);
   const [camError, setCamError] = useState("");
+  const [photoError, setPhotoError] = useState("");
+  const [photoBusy, setPhotoBusy] = useState(false);
+  const fileRef = useRef(null);
 
   const videoRef = useRef(null);
   const streamRef = useRef(null);
@@ -196,12 +231,15 @@ export default function AdvertiseStudio() {
   var deal = deals[dealIdx] || null;
   var strategy = deal && deal.strategy ? deal.strategy : "ltr";
 
+  var photoKey = deal ? dealPhotoKey(deal, dealIdx) : null;
+  var photos = (photoKey && photoMap[photoKey]) || EMPTY_PHOTOS_ARR;
+
   var beats = [];
   if (deal) {
     if (strategy === "flip") beats = flipBeats(deal, computeFlip(deal));
     else if (strategy === "brrrr") beats = brrrrBeats(deal, computeBrrrr(deal));
     else beats = rentalBeats(deal, strategy, computeRental(deal, strategy));
-    beats = beats.concat([CTA_BEAT]);
+    beats = photoBeats(photos, deal).concat(beats, [CTA_BEAT]);
   }
 
   var maxBeat = Math.max(0, beats.length - 1);
@@ -250,6 +288,60 @@ export default function AdvertiseStudio() {
   }, [camOn, camCorner, camSize, camRound]);
 
   useEffect(function () { return function () { if (streamRef.current) streamRef.current.getTracks().forEach(function (t) { t.stop(); }); }; }, []);
+
+  const savePhotos = useCallback(function (next) {
+    if (!photoKey) return;
+    var map = Object.assign({}, photoMap);
+    if (next.length) map[photoKey] = next; else delete map[photoKey];
+    try {
+      writeJSONOrThrow(PHOTOS_KEY, map);
+      setPhotoError("");
+    } catch (e) {
+      setPhotoError(isQuotaError(e)
+        ? "Your browser’s storage is full. Remove a photo from another deal and try again."
+        : "Couldn’t save that photo.");
+    }
+  }, [photoKey, photoMap]);
+
+  const addFiles = useCallback(async function (fileList) {
+    if (!photoKey) { setPhotoError("Pick a deal first."); return; }
+    var files = Array.prototype.slice.call(fileList || []).filter(function (f) { return /^image\//.test(f.type || ""); });
+    if (!files.length) { setPhotoError("No images in that drop."); return; }
+    setPhotoBusy(true);
+    setPhotoError("");
+    var added = [];
+    for (var i = 0; i < files.length; i++) {
+      try { added.push(await compressToDataUrl(files[i])); }
+      catch (e) { setPhotoError(e.message || "That image couldn’t be added."); }
+    }
+    if (added.length) savePhotos((photoMap[photoKey] || []).concat(added));
+    setPhotoBusy(false);
+  }, [photoKey, photoMap, savePhotos]);
+
+  const removePhoto = useCallback(function (i) {
+    var cur = (photoMap[photoKey] || []).slice();
+    cur.splice(i, 1);
+    savePhotos(cur);
+    setBeatIdx(0);
+  }, [photoKey, photoMap, savePhotos]);
+
+  const movePhotoUp = useCallback(function (i) {
+    if (i <= 0) return;
+    var cur = (photoMap[photoKey] || []).slice();
+    var t = cur[i - 1]; cur[i - 1] = cur[i]; cur[i] = t;
+    savePhotos(cur);
+  }, [photoKey, photoMap, savePhotos]);
+
+  // paste a screenshot straight from a listing
+  useEffect(function () {
+    function onPaste(e) {
+      if (e.target && /^(INPUT|TEXTAREA|SELECT)$/.test(e.target.tagName)) return;
+      var items = e.clipboardData && e.clipboardData.files;
+      if (items && items.length) { e.preventDefault(); addFiles(items); }
+    }
+    window.addEventListener("paste", onPaste);
+    return function () { window.removeEventListener("paste", onPaste); };
+  }, [addFiles]);
 
   // keyboard
   useEffect(function () {
@@ -305,6 +397,43 @@ export default function AdvertiseStudio() {
           )}
         </section>
 
+        <section
+          className="ctl"
+          onDragOver={function (e) { e.preventDefault(); }}
+          onDrop={function (e) { e.preventDefault(); addFiles(e.dataTransfer.files); }}
+        >
+          <div className="ctl-label">Property photos</div>
+          <input
+            ref={fileRef}
+            type="file"
+            accept="image/jpeg,image/png,image/webp,image/gif"
+            multiple
+            style={{ display: "none" }}
+            onChange={function (e) { addFiles(e.target.files); e.target.value = ""; }}
+          />
+          <button className="btn" onClick={function () { if (fileRef.current) fileRef.current.click(); }} disabled={!deal || photoBusy}>
+            {photoBusy ? "Adding…" : "Add photos"}
+          </button>
+          <p className="hint">Drop images here, or paste a screenshot with <kbd>⌘</kbd><kbd>V</kbd>. They open the video full screen, in this order.</p>
+          {photoError ? <p className="err">{photoError}</p> : null}
+          {photos.length ? (
+            <div className="thumbs">
+              {photos.map(function (src, i) {
+                return (
+                  <div key={i} className="thumb">
+                    {/* eslint-disable-next-line @next/next/no-img-element */}
+                    <img src={src} alt={"Property photo " + (i + 1)} />
+                    <div className="thumb-acts">
+                      {i > 0 ? <button onClick={function () { movePhotoUp(i); }} title="Move earlier">↑</button> : null}
+                      <button onClick={function () { removePhoto(i); }} title="Remove">×</button>
+                    </div>
+                  </div>
+                );
+              })}
+            </div>
+          ) : null}
+        </section>
+
         <section className="ctl">
           <div className="ctl-label">Camera</div>
           {camOn ? (
@@ -355,6 +484,21 @@ export default function AdvertiseStudio() {
               <div className="stage-empty">
                 <div className="se-mark">No deal loaded</div>
                 <p>Save a deal in the Deal Analyzer, then pick it on the left.</p>
+              </div>
+            ) : beat.photo ? (
+              <div className="photostage">
+                {/* eslint-disable-next-line @next/next/no-img-element */}
+                <img className="photo" src={beat.photo} alt={beat.headline} />
+                <div className="photo-scrim" />
+                <div className="photo-copy">
+                  <div className="kicker">{beat.kicker}</div>
+                  <h1 className="photo-headline">{beat.headline}</h1>
+                  {beat.overline ? <div className="photo-price">{beat.overline}</div> : null}
+                </div>
+                <div className="photo-brand">Capital Region Investor Hub</div>
+                <div className="dots photo-dots">
+                  {beats.map(function (b, i) { return <span key={b.key} className={"dot" + (i === beatIdx ? " on" : "")} />; })}
+                </div>
               </div>
             ) : (
               <div className="stage-inner">
@@ -546,6 +690,25 @@ kbd { font-family: ui-monospace, Menlo, monospace; font-size: 10px; background: 
 .dot { width: 1.1cqw; height: 1.1cqw; border-radius: 50%; background: var(--b-gray-border); }
 .dot.on { background: var(--b-green-light); }
 .handle { text-align: center; font-size: 1.5cqh; font-weight: 700; letter-spacing: 1.5px; color: var(--b-gray-muted); flex-shrink: 0; }
+
+.photostage { position: absolute; inset: 0; }
+.photo { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; display: block; }
+.photo-scrim { position: absolute; inset: 0; background: linear-gradient(to top, rgba(0,0,0,.88) 0%, rgba(0,0,0,.55) 26%, rgba(0,0,0,.05) 52%, rgba(0,0,0,.35) 100%); }
+.photo-copy { position: absolute; left: 7cqw; right: 7cqw; bottom: 9cqh; display: flex; flex-direction: column; gap: 1.1cqh; }
+.photo-copy .kicker { color: #9ade7c; }
+.photo-headline { font-family: 'Bebas Neue', sans-serif; font-size: 7.4cqh; line-height: .96; letter-spacing: 1px; margin: 0; color: #fff; text-wrap: balance; text-shadow: 0 .4cqh 2cqh rgba(0,0,0,.6); }
+.photo-price { font-family: 'Bebas Neue', sans-serif; font-size: 9.5cqh; line-height: 1; color: #fff; font-variant-numeric: tabular-nums; text-shadow: 0 .4cqh 2cqh rgba(0,0,0,.6); }
+.photo-brand { position: absolute; top: 5cqh; left: 7cqw; right: 7cqw; font-family: 'Bebas Neue', sans-serif; font-size: 2.6cqh; letter-spacing: 2px; color: rgba(255,255,255,.92); text-shadow: 0 .3cqh 1.5cqh rgba(0,0,0,.7); }
+.photo-dots { position: absolute; left: 0; right: 0; bottom: 2.6cqh; }
+.photo-dots .dot { background: rgba(255,255,255,.35); }
+.photo-dots .dot.on { background: #fff; }
+
+.thumbs { display: grid; grid-template-columns: repeat(3, 1fr); gap: 6px; }
+.thumb { position: relative; aspect-ratio: 1; border-radius: 7px; overflow: hidden; border: 1px solid var(--b-gray-border); }
+.thumb img { width: 100%; height: 100%; object-fit: cover; display: block; }
+.thumb-acts { position: absolute; top: 3px; right: 3px; display: flex; gap: 3px; }
+.thumb-acts button { width: 19px; height: 19px; padding: 0; font-size: 12px; line-height: 1; font-family: inherit; color: #fff; background: rgba(0,0,0,.62); border: none; border-radius: 5px; cursor: pointer; }
+.thumb-acts button:hover { background: var(--b-green); }
 
 .cam { position: absolute; aspect-ratio: 1; overflow: hidden; border: 0.4cqh solid var(--b-green); box-shadow: 0 1cqh 3cqh rgba(0,0,0,.35); border-radius: 1.6cqh; }
 .cam.round { border-radius: 50%; }
