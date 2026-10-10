@@ -1,12 +1,12 @@
 import { ClerkProvider } from "@clerk/nextjs";
-import { DM_Sans } from "next/font/google";
+import { Inter } from "next/font/google";
 import Script from "next/script";
 import "./globals.css";
 
-const dmSans = DM_Sans({
-  variable: "--font-dm-sans",
+const inter = Inter({
+  variable: "--font-inter",
   subsets: ["latin"],
-  weight: ["300", "400", "500", "600", "700", "800"],
+  weight: ["300", "400", "500", "600", "700"],
 });
 
 export const metadata = {
@@ -17,8 +17,8 @@ export const metadata = {
 
 export const viewport = {
   themeColor: [
-    { media: "(prefers-color-scheme: light)", color: "#f5f7f4" },
-    { media: "(prefers-color-scheme: dark)", color: "#080d09" },
+    { media: "(prefers-color-scheme: light)", color: "#ffffff" },
+    { media: "(prefers-color-scheme: dark)", color: "#0c0a08" },
   ],
 };
 
@@ -31,16 +31,16 @@ export default function RootLayout({ children }) {
     <ClerkProvider
       appearance={{
         variables: {
-          colorPrimary: "#1b4812",
+          colorPrimary: "#0c0a08",
           colorBackground: "#ffffff",
           colorInputBackground: "#ffffff",
-          colorInputText: "#0f172a",
-          colorText: "#0f172a",
-          colorTextSecondary: "#475569",
-          colorNeutral: "#475569",
+          colorInputText: "#0c0a08",
+          colorText: "#0c0a08",
+          colorTextSecondary: "#6e6a68",
+          colorNeutral: "#6e6a68",
           colorTextOnPrimaryBackground: "#ffffff",
-          borderRadius: "8px",
-          fontFamily: "'DM Sans', sans-serif",
+          borderRadius: "6px",
+          fontFamily: "var(--font-inter), Arial, sans-serif",
         },
         elements: {
           rootBox: {
@@ -50,27 +50,27 @@ export default function RootLayout({ children }) {
             backgroundColor: "#ffffff",
             border: "1px solid rgba(0,0,0,0.1)",
             boxShadow: "0 8px 40px rgba(0,0,0,0.1)",
-            borderRadius: "14px",
+            borderRadius: "12px",
           },
           headerTitle: {
-            color: "#0f172a",
-            fontFamily: "'DM Sans', sans-serif",
+            color: "#0c0a08",
+            fontFamily: "var(--font-inter), Arial, sans-serif",
             fontWeight: 700,
           },
           headerSubtitle: {
-            color: "#475569",
+            color: "#6e6a68",
           },
           socialButtonsBlockButton: {
             backgroundColor: "#ffffff",
             border: "1px solid rgba(0,0,0,0.1)",
-            color: "#475569",
+            color: "#6e6a68",
             "&:hover": {
               backgroundColor: "rgba(0,0,0,0.02)",
               borderColor: "rgba(0,0,0,0.2)",
             },
           },
           socialButtonsBlockButtonText: {
-            color: "#475569",
+            color: "#6e6a68",
             fontWeight: 500,
           },
           dividerLine: {
@@ -80,7 +80,7 @@ export default function RootLayout({ children }) {
             color: "#64748b",
           },
           formFieldLabel: {
-            color: "#475569",
+            color: "#6e6a68",
             fontWeight: 600,
             fontSize: "11px",
             textTransform: "uppercase",
@@ -89,30 +89,28 @@ export default function RootLayout({ children }) {
           formFieldInput: {
             backgroundColor: "#ffffff",
             border: "1px solid rgba(0,0,0,0.1)",
-            color: "#0f172a",
+            color: "#0c0a08",
             "&:focus": {
-              borderColor: "#1b4812",
-              boxShadow: "0 0 0 1px #1b4812",
+              borderColor: "#0c0a08",
+              boxShadow: "0 0 0 1px #0c0a08",
             },
           },
           formFieldAction: {
-            color: "#2a6b1a",
+            color: "#1a1919",
             fontWeight: 600,
           },
           formButtonPrimary: {
-            backgroundColor: "#1b4812",
-            fontWeight: 700,
-            textTransform: "uppercase",
-            letterSpacing: "0.5px",
+            backgroundColor: "#0c0a08",
+            fontWeight: 400,
             "&:hover": {
-              backgroundColor: "#2a6b1a",
+              backgroundColor: "#1a1919",
             },
           },
           footerAction: {
             color: "#64748b",
           },
           footerActionLink: {
-            color: "#2a6b1a",
+            color: "#1a1919",
             fontWeight: 600,
           },
           identityPreview: {
@@ -120,37 +118,37 @@ export default function RootLayout({ children }) {
             border: "1px solid rgba(0,0,0,0.1)",
           },
           identityPreviewText: {
-            color: "#0f172a",
+            color: "#0c0a08",
           },
           identityPreviewEditButton: {
-            color: "#2a6b1a",
+            color: "#1a1919",
           },
           otpCodeFieldInput: {
             backgroundColor: "#ffffff",
             border: "1px solid rgba(0,0,0,0.1)",
-            color: "#0f172a",
+            color: "#0c0a08",
           },
           formResendCodeLink: {
-            color: "#2a6b1a",
+            color: "#1a1919",
           },
           alert: {
             backgroundColor: "rgba(27,72,18,0.05)",
             border: "1px solid rgba(27,72,18,0.1)",
-            color: "#0f172a",
+            color: "#0c0a08",
           },
           alertText: {
-            color: "#475569",
+            color: "#6e6a68",
           },
           badge: {
             backgroundColor: "rgba(27,72,18,0.1)",
-            color: "#2a6b1a",
+            color: "#1a1919",
           },
         },
       }}
     >
       {/* The inline script below sets data-theme before hydration, so the
           server HTML and the client DOM differ on <html> by design. */}
-      <html lang="en" className={dmSans.variable} suppressHydrationWarning>
+      <html lang="en" className={inter.variable} suppressHydrationWarning>
         <head>
           <script dangerouslySetInnerHTML={{ __html: noFlashTheme }} />
           {/* Google Analytics */}
