@@ -3,7 +3,7 @@
 // src/components/App.js — if that file's math changes, this fails.
 // Run: node scripts/verify-deal-math.mjs
 
-import { computeRental, computeFlip, computeBrrrr } from "../src/lib/dealMath.js";
+import { computeRental, computeFlip, computeBrrrr, computeHold, loanBalance, irr } from "../src/lib/dealMath.js";
 
 const base = {
   units: 4, purchasePrice: 400000, downPct: 25, rate: 7.0, term: 30,
@@ -22,9 +22,12 @@ const base = {
 };
 
 // A second, more aggressive scenario to catch branch-specific mistakes.
+// It also exercises the optional fields (HOA, rehab, contingency, refi
+// closing, BRRRR management) that older saved deals don't carry.
 const alt = { ...base, units: 8, purchasePrice: 725000, downPct: 20, rate: 6.125, term: 25,
   grossRent: 9400, otherIncome: 250, vacancy: 7, management: 8, utilities: 320, otherExp: 90,
-  sellerConcession: 5000, taxes: 14200, insurance: 5100 };
+  sellerConcession: 5000, taxes: 14200, insurance: 5100,
+  hoa: 120, rehabUpfront: 18000, flipContingencyPct: 10, brrrrRefiClosing: 4500, brrrrMgmtPct: 8 };
 
 let failures = 0;
 const near = (a, b) => (a === b) || (Math.abs(a - b) < 1e-9) || (Math.abs(a - b) / Math.max(Math.abs(a), Math.abs(b)) < 1e-12);
@@ -49,7 +52,7 @@ function inlineRental(d, strategy) {
   var furnishing = (strategy === "str" || strategy === "mtr") ? d.furnishingTotal : 0;
   var lenderFeeDollars = loan * (d.lenderFees / 100);
   var closingCosts = lenderFeeDollars + d.attorneyFees + d.titleFees + d.appraisal;
-  var totalCashInvested = dp + furnishing + closingCosts - d.sellerConcession;
+  var totalCashInvested = dp + furnishing + closingCosts + (d.rehabUpfront || 0) - d.sellerConcession;
   var gri = 0, egi = 0;
   if (strategy === "str") {
     var bookingRev = d.adr * (d.occupancy / 100) * 365;
@@ -67,7 +70,7 @@ function inlineRental(d, strategy) {
   var maintenanceDollar = gri * (d.maintenancePct / 100);
   var capexDollar = gri * (d.capexPct / 100);
   var mgmtDollar = egi * (d.management / 100);
-  var totExp = d.taxes + d.insurance + maintenanceDollar + capexDollar + mgmtDollar + d.utilities * 12 + d.otherExp * 12;
+  var totExp = d.taxes + d.insurance + maintenanceDollar + capexDollar + mgmtDollar + d.utilities * 12 + d.otherExp * 12 + (d.hoa || 0) * 12;
   var noi = egi - totExp;
   var cf = noi - annMtg;
   return { dp, loan, mtg, annMtg, closingCosts, totalCashInvested, gri, egi,
@@ -83,7 +86,7 @@ function inlineRental(d, strategy) {
 function inlineFlip(d) {
   var mao = (d.flipMaoPct / 100) * d.flipArv - d.flipRehab;
   var totalHolding = d.flipHoldingPerMonth * d.flipHoldingMonths;
-  var totalInvested = d.purchasePrice + d.flipRehab + d.flipClosing + totalHolding;
+  var totalInvested = d.purchasePrice + d.flipRehab + d.flipRehab * ((d.flipContingencyPct || 0) / 100) + d.flipClosing + totalHolding;
   var sellingCosts = d.flipArv * (d.flipSellingPct / 100);
   var netProceeds = d.flipArv - sellingCosts;
   var profit = netProceeds - totalInvested;
@@ -95,7 +98,7 @@ function inlineFlip(d) {
 function inlineBrrrr(d) {
   var totalAllIn = d.purchasePrice + d.brrrrRehab + d.brrrrClosing + d.brrrrHoldInterest - d.brrrrHoldRentCollected;
   var refiLoan = d.brrrrArv * (d.brrrrRefiLtv / 100);
-  var cashLeftIn = totalAllIn - refiLoan;
+  var cashLeftIn = totalAllIn - refiLoan + (d.brrrrRefiClosing || 0);
   var mr = (d.brrrrRefiRate / 100) / 12;
   var tp = d.brrrrRefiTerm * 12;
   var mtg = mr > 0 ? refiLoan * (mr * Math.pow(1 + mr, tp)) / (Math.pow(1 + mr, tp) - 1) : refiLoan / tp;
@@ -104,7 +107,7 @@ function inlineBrrrr(d) {
   var egi = gri - vacDollar;
   var maint = gri * (d.brrrrMaintPct / 100);
   var capx = gri * (d.brrrrCapxPct / 100);
-  var totOpex = d.brrrrInsurance + d.brrrrTaxes + d.brrrrWaterSewer + maint + capx + d.brrrrTrash + d.brrrrLawn;
+  var totOpex = d.brrrrInsurance + d.brrrrTaxes + d.brrrrWaterSewer + maint + capx + d.brrrrTrash + d.brrrrLawn + egi * ((d.brrrrMgmtPct || 0) / 100);
   var noi = egi - totOpex;
   var annDebt = mtg * 12;
   var cf = noi - annDebt;
@@ -126,6 +129,16 @@ const expect = { gri: 62400, egi: 59280, noi: 44640, cfDoor: (44640 - r.annMtg) 
 for (const [k, v] of Object.entries(expect)) {
   if (!near(r[k], v)) { console.error(`  ABSOLUTE ${k}: got ${r[k]}, expected ${v}`); failures++; }
 }
+
+// Hold-period sanity checks.
+if (!near(loanBalance(300000, 7, 30, 360), 0) && Math.abs(loanBalance(300000, 7, 30, 360)) > 1e-6) { console.error("  loanBalance should hit 0 at term end"); failures++; }
+if (Math.abs(loanBalance(300000, 0, 30, 180) - 150000) > 1e-6) { console.error("  zero-rate balance should be linear"); failures++; }
+if (Math.abs(irr([-100, 110]) - 0.10) > 1e-6) { console.error(`  irr([-100,110]) = ${irr([-100, 110])}, expected 0.10`); failures++; }
+const h = computeHold({ ...base, holdYears: 5, appreciationPct: 3, rentGrowthPct: 3, expenseGrowthPct: 3, sellingCostPct: 6 }, r);
+if (h.rows.length !== 5 || !near(h.rows[0].noi, r.noi)) { console.error("  hold year 1 NOI should equal current NOI"); failures++; }
+const flows = [-r.totalCashInvested].concat(h.rows.map((row, i) => row.cf + (i === 4 ? h.netSale : 0)));
+const npvAtIrr = flows.reduce((a, f, t) => a + f / Math.pow(1 + h.irr, t), 0);
+if (Math.abs(npvAtIrr) > 1e-3) { console.error(`  NPV at IRR = ${npvAtIrr}, expected ~0`); failures++; }
 
 if (failures) { console.error(`\n${failures} mismatch(es) — dealMath.js has drifted from DealAnalyzer.`); process.exit(1); }
 console.log("All deal math matches DealAnalyzer across ltr/str/mtr/flip/brrrr on 2 scenarios.");
