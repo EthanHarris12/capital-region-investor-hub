@@ -17,14 +17,14 @@ export const metadata = {
 
 export const viewport = {
   themeColor: [
-    { media: "(prefers-color-scheme: light)", color: "#f6f9f5" },
-    { media: "(prefers-color-scheme: dark)", color: "#0e1a12" },
+    { media: "(prefers-color-scheme: light)", color: "#f5f7f4" },
+    { media: "(prefers-color-scheme: dark)", color: "#080d09" },
   ],
 };
 
-// Applies the saved theme before first paint so the page never
-// flashes light before switching to dark.
-const noFlashTheme = `(function(){try{var t=localStorage.getItem('crih_theme');if(t==='dark'||t==='light'){document.documentElement.setAttribute('data-theme',t);}}catch(e){}})();`;
+// Applies the saved theme (or the OS preference on a first visit) before
+// first paint so the page never flashes light before switching to dark.
+const noFlashTheme = `(function(){var d=document.documentElement;try{var t=localStorage.getItem('crih_theme');if(t!=='dark'&&t!=='light'){t=window.matchMedia&&window.matchMedia('(prefers-color-scheme: dark)').matches?'dark':'light';}d.setAttribute('data-theme',t);}catch(e){d.setAttribute('data-theme','light');}})();`;
 
 export default function RootLayout({ children }) {
   return (
@@ -148,7 +148,9 @@ export default function RootLayout({ children }) {
         },
       }}
     >
-      <html lang="en" className={dmSans.variable}>
+      {/* The inline script below sets data-theme before hydration, so the
+          server HTML and the client DOM differ on <html> by design. */}
+      <html lang="en" className={dmSans.variable} suppressHydrationWarning>
         <head>
           <script dangerouslySetInnerHTML={{ __html: noFlashTheme }} />
           {/* Google Analytics */}
