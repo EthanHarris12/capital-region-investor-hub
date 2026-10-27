@@ -469,6 +469,7 @@ var ICONS = {
   phone: "M22 16.9v3a2 2 0 0 1-2.2 2 19.8 19.8 0 0 1-8.6-3.1 19.5 19.5 0 0 1-6-6A19.8 19.8 0 0 1 2.1 4.2 2 2 0 0 1 4.1 2h3a2 2 0 0 1 2 1.7c.1.9.4 1.8.7 2.7a2 2 0 0 1-.5 2.1L8 9.8a16 16 0 0 0 6 6l1.3-1.3a2 2 0 0 1 2.1-.4c.9.3 1.8.6 2.7.7a2 2 0 0 1 1.7 2z",
   mail: "M4 4h16a2 2 0 0 1 2 2v12a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2zM22 6l-10 7L2 6",
   trend: "M3 17l6-6 4 4 8-8M15 7h6v6",
+  receipt: "M5 3h14v18l-3-2-2 2-2-2-2 2-2-2-3 2zM9 8h6M9 12h6M9 16h4",
 };
 function Icon({ name, size, color }) {
   return (
@@ -1959,6 +1960,18 @@ function ActivityLog() {
   );
 }
 
+// The flip & BRRRR expense ledger is a standalone app in
+// public/expense-tracker; its data stays in this browser's localStorage.
+function ExpenseTracker() {
+  return (
+    <iframe
+      src="/expense-tracker/index.html"
+      title="Expense Tracker"
+      style={{ display: "block", width: "100%", height: "min(900px, calc(100vh - 140px))", minHeight: 560, border: "1px solid " + B.grayBorder, borderRadius: 8, background: "#f6f9fc" }}
+    />
+  );
+}
+
 // ============================================
 // MAIN APP — Now uses Clerk authentication instead of LeadGate
 // ============================================
@@ -2015,6 +2028,7 @@ export default function App() {
     { key: "equity", label: "Equity", icon: "coin" },
     { key: "portfolio", label: "Portfolio", icon: "folder" },
     { key: "compare", label: "Compare", icon: "scale" },
+    { key: "expenses", label: "Expenses", icon: "receipt" },
   ];
   if (isAdmin) tabsList.push({ key: "activity", label: "Activity Log", icon: "list" });
 
@@ -2034,6 +2048,7 @@ export default function App() {
     equity: "Track equity, cashflow, and refinance or HELOC options on what you own.",
     portfolio: "Everything you've saved, rolled up into one view.",
     compare: "Put two saved analyses head-to-head.",
+    expenses: "Log rehab spend as it happens and track every flip and BRRRR against budget.",
     activity: "Prospect engagement and attribution.",
   };
 
@@ -2089,6 +2104,7 @@ export default function App() {
             {tab === "equity" && <EquityEstimator onTrack={handleTrack} />}
             {tab === "portfolio" && <PortfolioDashboard onTrack={handleTrack} />}
             {tab === "compare" && <DealComparison onTrack={handleTrack} />}
+            {tab === "expenses" && <ExpenseTracker />}
             {tab === "activity" && isAdmin && <ActivityLog />}
           </div>
         </main>
