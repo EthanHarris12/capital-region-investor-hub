@@ -1,4 +1,7 @@
 @import "tailwindcss";
+/* The expense tracker builds markup from template strings; keep Tailwind
+   from turning its class names (grid, grow, ...) into utilities. */
+@source not "../lib/expense-tracker";
 
 /* ============================================
    THEME TOKENS

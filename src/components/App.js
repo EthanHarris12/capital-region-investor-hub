@@ -5,6 +5,7 @@ import { useUser, SignOutButton } from "@clerk/nextjs";
 import { useSearchParams } from "next/navigation";
 import Link from "next/link";
 import { isAdminUser } from "@/lib/admin";
+import ExpenseTracker from "@/components/ExpenseTracker";
 
 // ============================================
 // CONFIG — Update these for your deployment
@@ -1960,18 +1961,6 @@ function ActivityLog() {
   );
 }
 
-// The flip & BRRRR expense ledger is a standalone app in
-// public/expense-tracker; its data stays in this browser's localStorage.
-function ExpenseTracker() {
-  return (
-    <iframe
-      src="/expense-tracker/index.html"
-      title="Expense Tracker"
-      style={{ display: "block", width: "100%", height: "min(900px, calc(100vh - 140px))", minHeight: 560, border: "1px solid " + B.grayBorder, borderRadius: 8, background: "#f6f9fc" }}
-    />
-  );
-}
-
 // ============================================
 // MAIN APP — Now uses Clerk authentication instead of LeadGate
 // ============================================
@@ -1988,9 +1977,10 @@ export default function App() {
     phone: user.primaryPhoneNumber ? user.primaryPhoneNumber.phoneNumber : "",
   } : null;
 
-  // Check for admin mode via URL param
-  var isAdmin = searchParams.get("admin") === "true" || searchParams.get("admin") === "1";
+  // Staff tools need an allowlisted account; ?admin=1 only toggles the
+  // Activity Log tab on for staff and does nothing for anyone else.
   var isStaff = isAdminUser(user);
+  var isAdmin = isStaff && (searchParams.get("admin") === "true" || searchParams.get("admin") === "1");
 
   useEffect(function() {
     // Capture UTM parameters on landing (persists via localStorage for same-session attribution)

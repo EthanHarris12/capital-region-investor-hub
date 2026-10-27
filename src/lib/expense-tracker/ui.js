@@ -38,7 +38,7 @@ export const icon = (name, size = 16, sw = 2) =>
   `<svg width="${size}" height="${size}" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="${sw}" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">${P[name] || ''}</svg>`;
 
 // ---- tooltip ----
-const tipEl = () => document.getElementById('tip');
+const tipEl = () => document.getElementById('xt-tip');
 export const tip = {
   show(html, x, y) {
     const el = tipEl();
@@ -53,12 +53,15 @@ export const tip = {
   },
   hide() { tipEl().classList.remove('on'); },
 };
-export function bindTooltips() {
-  document.addEventListener('mousemove', (e) => {
+// `opts` carries the AbortSignal that removes these listeners on unmount.
+export function bindUI(root, opts) {
+  root.addEventListener('mousemove', (e) => {
     const t = e.target.closest?.('[data-tip]');
     if (t) tip.show(t.getAttribute('data-tip'), e.clientX, e.clientY);
     else if (!e.target.closest?.('.line-chart .plot')) tip.hide();
-  });
+  }, opts);
+  root.addEventListener('mouseleave', () => tip.hide(), opts);
+  document.addEventListener('keydown', (e) => { if (e.key === 'Escape') closeModal(); }, opts);
 }
 
 // ---- toasts ----
@@ -66,7 +69,7 @@ export function toast(msg, { undo } = {}) {
   const el = document.createElement('div');
   el.className = 'toast';
   el.innerHTML = `<span class="ok">${icon('check', 11, 3)}</span><span>${esc(msg)}</span>${undo ? '<button>Undo</button>' : ''}`;
-  document.getElementById('toasts').appendChild(el);
+  document.getElementById('xt-toasts').appendChild(el);
   const kill = () => { el.classList.add('out'); setTimeout(() => el.remove(), 260); };
   if (undo) el.querySelector('button').onclick = () => { undo(); kill(); };
   setTimeout(kill, undo ? 6000 : 2800);
@@ -79,7 +82,7 @@ export function openModal(inner, { wide = false, cls = '', onClose } = {}) {
   const back = document.createElement('div');
   back.className = 'modal-back';
   back.innerHTML = `<div class="modal ${wide ? 'wide' : ''} ${cls}" role="dialog" aria-modal="true">${inner}</div>`;
-  document.getElementById('modal-root').appendChild(back);
+  document.getElementById('xt-modal-root').appendChild(back);
   back.addEventListener('mousedown', (e) => { if (e.target === back) closeModal(); });
   back.querySelectorAll('[data-close]').forEach((b) => b.addEventListener('click', () => closeModal()));
   current = { back, onClose };
@@ -94,7 +97,6 @@ export function closeModal(instant = false) {
   back.classList.add('closing');
   setTimeout(() => back.remove(), 180);
 }
-document.addEventListener('keydown', (e) => { if (e.key === 'Escape') closeModal(); });
 
 // ---- forms ----
 function fieldHTML(f, v) {

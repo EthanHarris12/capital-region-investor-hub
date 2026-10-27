@@ -281,7 +281,6 @@ export function projectView(p, tab, ctx) {
 
   const header = `
   <section class="hero compact">
-    <div class="mesh"><i></i><i></i><i></i><i></i><i></i></div>
     <div class="hero-row">
       <div class="rise">
         <div class="eyebrow"><span class="tag ${p.type}">${flip ? 'Fix & flip' : 'BRRRR'}</span> ${esc(p.address)}${p.city ? ` · ${esc(p.city)}` : ''}</div>
@@ -326,7 +325,7 @@ function spendChart(p, c) {
   return `<div class="card rise" style="--i:6">
     <div class="card-head"><div><div class="card-title">Rehab spend over time</div><div class="card-sub">Cumulative vs. a straight-line budget pace to ${p.type === 'flip' ? 'sale' : 'refi'}</div></div>
       <div class="legend"><span><i class="line" style="background:var(--accent)"></i>Spent</span><span><i class="dash"></i>Budget pace</span></div></div>
-    ${lineChart([{ name: 'Spent', color: 'var(--accent)', points: c.series, step: true, area: true }, { name: 'Budget pace', color: '#8792a2', points: pace, dashed: true }])}
+    ${lineChart([{ name: 'Spent', color: 'var(--accent)', points: c.series, step: true, area: true }, { name: 'Budget pace', color: 'var(--muted)', points: pace, dashed: true }])}
   </div>`;
 }
 
@@ -386,7 +385,7 @@ function sourcesUses(p, c) {
     { label: 'Loan points & fees', value: c.loanCosts, color: 'var(--s4)' },
     { label: 'Rehab paid', value: c.paid, color: 'var(--s2)' },
     { label: 'Holding to date', value: c.holdingToDate, color: 'var(--s3)' },
-    { label: 'Remaining', value: Math.max(0, c.fundsRemaining), color: '#dfe4ea' },
+    { label: 'Remaining', value: Math.max(0, c.fundsRemaining), color: 'var(--line)' },
   ];
   return `<div class="card rise" style="--i:4">
     <div class="card-head"><div><div class="card-title">Sources &amp; uses</div><div class="card-sub">Cash basis, to date</div></div></div>
@@ -497,7 +496,7 @@ function budgetTab(p, c) {
     </div>
     <div class="card rise" style="--i:5"><div class="card-head"><div class="card-title">Budget by category</div></div>
       ${donut(p.budget.filter((b) => b.amount > 0).sort((a, b) => b.amount - a.amount).slice(0, 7).map((b, i) => ({ label: b.category, value: b.amount, color: `var(--s${i + 1})` }))
-        .concat((() => { const rest = p.budget.filter((b) => b.amount > 0).sort((a, b) => b.amount - a.amount).slice(7); return rest.length ? [{ label: `Other (${rest.length})`, value: sum(rest, 'amount'), color: '#b9c3d0' }] : []; })()),
+        .concat((() => { const rest = p.budget.filter((b) => b.amount > 0).sort((a, b) => b.amount - a.amount).slice(7); return rest.length ? [{ label: `Other (${rest.length})`, value: sum(rest, 'amount'), color: 'var(--muted-2)' }] : []; })()),
         { center: compact(c.rehabBudget), centerLabel: 'budget' })}
     </div>
   </div>`;
