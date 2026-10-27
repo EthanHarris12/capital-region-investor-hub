@@ -1,7 +1,9 @@
 // ============================================
 // ADMIN ALLOWLIST
-// Add or remove addresses here. Matching is case-insensitive and checks
-// every email on the Clerk account, not just the primary one.
+// The Advertise Studio and Activity Log are for these addresses only.
+// Matching is case-insensitive, and an address only counts once Clerk has
+// verified it, so nobody can unlock staff tools by typing your email onto
+// their own account.
 // ============================================
 
 export const ADMIN_EMAILS = [
@@ -14,13 +16,16 @@ export function isAdminEmail(email) {
   return ADMIN_EMAILS.indexOf(String(email).trim().toLowerCase()) !== -1;
 }
 
+function isVerified(address) {
+  return !!(address && address.verification && address.verification.status === "verified");
+}
+
 // Accepts a Clerk user object from either useUser() or currentUser().
 export function isAdminUser(user) {
   if (!user) return false;
   var list = user.emailAddresses || [];
   for (var i = 0; i < list.length; i++) {
-    if (isAdminEmail(list[i].emailAddress)) return true;
+    if (isVerified(list[i]) && isAdminEmail(list[i].emailAddress)) return true;
   }
-  if (user.primaryEmailAddress && isAdminEmail(user.primaryEmailAddress.emailAddress)) return true;
   return false;
 }

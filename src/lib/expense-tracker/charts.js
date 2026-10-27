@@ -48,7 +48,7 @@ export function budgetBars(cats, { limit = 0 } = {}) {
       <div class="track">
         <span class="fill grow" style="--i:${i};width:${paidW}%;background:${color}"></span>
         <span class="fill pending grow" style="--i:${i};left:${paidW}%;width:${pendW}%;background:${color}"></span>
-        ${over ? `<span style="position:absolute;top:0;bottom:0;left:${(c.budget / denom) * 100}%;width:2px;background:#fff"></span>` : ''}
+        ${over ? `<span style="position:absolute;top:0;bottom:0;left:${(c.budget / denom) * 100}%;width:2px;background:var(--surface)"></span>` : ''}
       </div></div>`;
   }).join('')}</div>`;
 }
@@ -152,7 +152,7 @@ export function waterfall(steps) {
   const span = max - min;
   const pctOf = (v) => ((v - min) / span) * 100;
   return `<div class="wf">${bars.map((b, i) => {
-    const color = b.kind === 'start' ? 'var(--s1)' : b.kind === 'total' ? (b.end >= 0 ? 'var(--good)' : 'var(--bad)') : '#a3acb9';
+    const color = b.kind === 'start' ? 'var(--s1)' : b.kind === 'total' ? (b.end >= 0 ? 'var(--good)' : 'var(--bad)') : 'var(--muted-2)';
     const v = b.kind === 'cost' ? `−${compact(b.value)}` : compact(b.kind === 'total' ? b.end : b.value);
     const below = b.kind === 'total' && b.end < 0;
     const next = bars[i + 1];

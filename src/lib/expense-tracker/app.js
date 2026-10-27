@@ -1,14 +1,17 @@
-// App shell: router, sidebar, topbar, global actions.
+// App shell: router, sidebar, topbar, global actions. The hub mounts this
+// into its Expenses tab with mount(root) and tears it down with unmount().
 import * as S from './store.js';
 import { calc } from './calc.js';
 import { esc, compact, runCounters, today } from './util.js';
-import { icon, tip, bindTooltips, toast, openModal, closeModal, openPalette } from './ui.js';
+import { icon, tip, bindUI, toast, openModal, closeModal, openPalette } from './ui.js';
 import { bindLineCharts } from './charts.js';
 import { overviewView } from './overview.js';
 import { projectView, PROJECT_TABS, openExpenseForm } from './project.js';
 
-S.load();
-const $view = document.getElementById('view');
+let root = null;
+let $view = null;
+let ac = null;
+let unsubscribe = null;
 let handlers = {};
 let lastRoute = [];
 
@@ -42,9 +45,17 @@ function render(mode = 'nav') {
   bindLineCharts($view, tip);
   placeInk(mode === 'tab' ? inkFrom : null);
   handlers.mounted?.($view);
-  if (mode !== 'data') window.scrollTo({ top: mode === 'tab' ? Math.min(scrollY, 300) : 0, behavior: mode === 'tab' ? 'smooth' : 'auto' });
+  if (mode === 'nav') scrollToTop();
   lastRoute = r;
-  document.body.classList.remove('nav-open');
+  root.classList.remove('nav-open');
+}
+
+// Bring the tracker's top edge back under the hub's sticky header, but only
+// when the reader has scrolled past it.
+function scrollToTop() {
+  const header = document.querySelector('.app-header');
+  const top = root.getBoundingClientRect().top + scrollY - (header ? header.offsetHeight : 0) - 16;
+  if (scrollY > top) window.scrollTo({ top, behavior: 'auto' });
 }
 
 function placeInk(from) {
@@ -60,7 +71,8 @@ function placeInk(from) {
     ink.style.transition = '';
   }
   requestAnimationFrame(() => Object.assign(ink.style, to));
-  active.scrollIntoView({ block: 'nearest', inline: 'nearest' });
+  // horizontal only, so switching tabs never scrolls the hub page
+  tabs.scrollTo({ left: Math.max(0, active.offsetLeft - 24), behavior: 'smooth' });
 }
 
 // ---- sidebar ----
@@ -73,9 +85,7 @@ function renderSidebar(r) {
   };
   const flips = st.projects.filter((p) => p.type === 'flip');
   const rentals = st.projects.filter((p) => p.type === 'brrrr');
-  document.getElementById('sidebar').innerHTML = `
-    <div class="brand"><div class="brand-mark"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><path d="M4 17l8-11 8 11"/></svg></div>
-      <div>Groundwork<small>${esc(st.settings.investor || 'Deal ledger')}</small></div></div>
+  document.getElementById('xt-sidebar').innerHTML = `
     <a class="nav-item ${!r.length ? 'active' : ''}" href="#/">${icon('home')} Overview <span class="nav-meta">${st.projects.length}</span></a>
     <div class="nav-label">Flips <button class="icon-btn-sm" data-action="new-deal" data-type="flip" title="New flip">${icon('plus', 14)}</button></div>
     ${flips.map(item).join('') || '<div class="nav-item muted" style="cursor:default;font-size:12.5px">No flips yet</div>'}
@@ -91,7 +101,7 @@ function renderSidebar(r) {
 // ---- topbar ----
 function renderTopbar(r, project) {
   const tabLabel = project && r[2] ? (PROJECT_TABS(project).find((t) => t.id === r[2])?.label || '') : '';
-  document.getElementById('topbar').innerHTML = `
+  document.getElementById('xt-topbar').innerHTML = `
     <button class="btn ghost icon menu-btn" data-action="toggle-nav" aria-label="Menu">${icon('menu')}</button>
     <div class="crumbs">${project
       ? `<a href="#/" style="color:inherit">Overview</a><span>/</span><b>${esc(project.name)}</b>${tabLabel ? `<span>/</span><span>${esc(tabLabel)}</span>` : ''}`
@@ -103,15 +113,15 @@ function renderTopbar(r, project) {
 
 // ---- global actions ----
 const global = {
-  'toggle-nav': () => document.body.classList.toggle('nav-open'),
-  'close-nav': () => document.body.classList.remove('nav-open'),
+  'toggle-nav': () => root.classList.toggle('nav-open'),
+  'close-nav': () => root.classList.remove('nav-open'),
   palette: () => palette(),
   'new-deal': (el) => newDeal(el?.dataset.type || 'flip'),
   'quick-expense': () => { const p = S.getProject(route()[1]); if (p) openExpenseForm(p, {}); },
   export: () => {
     const a = document.createElement('a');
     a.href = URL.createObjectURL(new Blob([JSON.stringify(S.getState(), null, 2)], { type: 'application/json' }));
-    a.download = `groundwork-backup-${today()}.json`;
+    a.download = `investor-hub-expenses-${today()}.json`;
     a.click();
     toast('Backup downloaded');
   },
@@ -126,7 +136,7 @@ const global = {
         S.replaceState(data);
         toast(`Imported ${data.projects.length} deals`, { undo: () => S.restore(before) });
         nav('#/');
-      } catch { toast('That file isn’t a Groundwork backup'); }
+      } catch { toast('That file isn’t an expense tracker backup'); }
     };
     inp.click();
   },
@@ -134,35 +144,60 @@ const global = {
   print: () => window.print(),
 };
 
-document.addEventListener('click', (e) => {
+function onClick(e) {
   const el = e.target.closest('[data-action]');
   if (!el) return;
   const a = el.dataset.action;
   const fn = handlers[a] || global[a];
   if (fn) { e.preventDefault(); fn(el, e); }
-});
-document.addEventListener('input', (e) => {
+}
+function onInput(e) {
   const el = e.target.closest('[data-bind]');
   if (el) return handlers.bind?.(el, e);
   const f = e.target.closest('[data-input]');
   if (f) handlers[f.dataset.input]?.(f, e);
-});
-document.addEventListener('change', (e) => { const el = e.target.closest('[data-change]'); if (el) handlers[el.dataset.change]?.(el, e); });
-document.addEventListener('keydown', (e) => {
+}
+function onChange(e) { const el = e.target.closest('[data-change]'); if (el) handlers[el.dataset.change]?.(el, e); }
+function onKey(e) {
   if ((e.metaKey || e.ctrlKey) && e.key.toLowerCase() === 'k') { e.preventDefault(); palette(); }
-});
+}
 // cursor-follow glow on deal cards
-document.addEventListener('pointermove', (e) => {
+function onPointer(e) {
   const c = e.target.closest?.('.deal-card');
   if (!c) return;
   const r = c.getBoundingClientRect();
   c.style.setProperty('--mx', `${e.clientX - r.left}px`);
   c.style.setProperty('--my', `${e.clientY - r.top}px`);
-});
-addEventListener('scroll', () => document.getElementById('topbar').classList.toggle('scrolled', scrollY > 8), { passive: true });
-addEventListener('hashchange', () => render('nav'));
-S.subscribe(() => render('data'));
-bindTooltips();
+}
+
+export function mount(el) {
+  if (ac) unmount();
+  root = el;
+  S.load();
+  $view = document.getElementById('xt-view');
+  ac = new AbortController();
+  const opts = { signal: ac.signal };
+  root.addEventListener('click', onClick, opts);
+  root.addEventListener('input', onInput, opts);
+  root.addEventListener('change', onChange, opts);
+  root.addEventListener('pointermove', onPointer, opts);
+  document.addEventListener('keydown', onKey, opts);
+  addEventListener('hashchange', () => render('nav'), opts);
+  unsubscribe = S.subscribe(() => render('data'));
+  bindUI(root, opts);
+  lastRoute = [];
+  render('nav');
+}
+
+export function unmount() {
+  closeModal(true);
+  ac?.abort();
+  unsubscribe?.();
+  ac = null;
+  unsubscribe = null;
+  root = null;
+  $view = null;
+}
 
 // ---- palette ----
 function palette() {
@@ -198,8 +233,8 @@ function newDeal(type) {
         <button type="button" class="btn ghost icon sm" data-close>${icon('x')}</button></div>
       <div class="modal-body">
         <div class="type-pick">
-          <button type="button" class="type-card" data-t="flip"><div class="type-ico" style="background:#fff0e8;color:#b5461a">${icon('hammer', 18)}</div><b>Fix &amp; flip</b><span>Buy, renovate, sell. Track rehab, holding costs and projected profit.</span></button>
-          <button type="button" class="type-card" data-t="brrrr"><div class="type-ico" style="background:#e6f7f0;color:#0f7a54">${icon('repeat', 18)}</div><b>BRRRR rental</b><span>Buy, rehab, rent, refinance, repeat. Track rent roll and cash left in.</span></button>
+          <button type="button" class="type-card" data-t="flip"><div class="type-ico flip">${icon('hammer', 18)}</div><b>Fix &amp; flip</b><span>Buy, renovate, sell. Track rehab, holding costs and projected profit.</span></button>
+          <button type="button" class="type-card" data-t="brrrr"><div class="type-ico brrrr">${icon('repeat', 18)}</div><b>BRRRR rental</b><span>Buy, rehab, rent, refinance, repeat. Track rent roll and cash left in.</span></button>
         </div>
         <div class="form-grid" style="margin-top:18px">
           <div class="field full"><label>Deal name</label><input class="input" name="name" required placeholder="e.g. Oak Street Ranch"></div>
@@ -244,4 +279,3 @@ function settings() {
   m.querySelector('[data-x=clear]').onclick = destructive(S.clearAll, 'All deals cleared');
 }
 
-render('nav');

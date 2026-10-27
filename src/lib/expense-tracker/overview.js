@@ -55,8 +55,6 @@ export function overviewView(ctx) {
   const st = getState();
   const pf = portfolio(st.projects);
   const equity = pf.value - pf.debt;
-  const hour = new Date().getHours();
-  const greet = hour < 12 ? 'Good morning' : hour < 18 ? 'Good afternoon' : 'Good evening';
   const alerts = pf.rows.flatMap(({ p, c }) => alertsFor(p, c));
   const shown = pf.rows.filter((r) => filter === 'all' || r.p.type === filter);
 
@@ -75,10 +73,9 @@ export function overviewView(ctx) {
 
   return `
   <section class="hero">
-    <div class="mesh"><i></i><i></i><i></i><i></i><i></i></div>
     <div class="hero-row">
       <div class="rise"><div class="eyebrow">${new Date().toLocaleDateString('en-US', { weekday: 'long', month: 'long', day: 'numeric' })}</div>
-        <h1>${greet}${st.settings.investor && st.settings.investor !== 'My Portfolio' ? `, ${esc(st.settings.investor)}` : ''}</h1>
+        <h1>${st.settings.investor && st.settings.investor !== 'My Portfolio' ? esc(st.settings.investor) : 'Your deals'}</h1>
         <div class="sub">${pf.flips.length} flip${pf.flips.length === 1 ? '' : 's'} and ${pf.rentals.length} rental${pf.rentals.length === 1 ? '' : 's'} · ${compact(pf.rehabSpent)} of rehab spend tracked</div></div>
       <div class="card-actions rise" style="--i:1"><button class="btn" data-action="palette">${icon('search')} Jump to deal</button></div>
     </div>
@@ -103,14 +100,14 @@ export function overviewView(ctx) {
   <div class="grid g-21 mt-lg">
     <div class="card rise" style="--i:8">
       <div class="card-head"><div><div class="card-title">Capital stack by deal</div><div class="card-sub">Your cash vs. borrowed funds deployed to date</div></div>
-        <div class="legend"><span><i style="background:var(--s7)"></i>Your cash</span><span><i style="background:#b9c3d0"></i>Loan + draws</span></div></div>
+        <div class="legend"><span><i style="background:var(--s7)"></i>Your cash</span><span><i style="background:var(--muted-2)"></i>Loan + draws</span></div></div>
       <div class="hbars">${pf.rows.map(({ p, c }, i) => {
         const max = Math.max(...pf.rows.map((r) => r.c.cashInvested + r.c.loanBalance), 1);
-        const tip = tipRows(p.name, [['Your cash', money(c.cashInvested), 'var(--s7)'], ['Loan + draws', money(c.loanBalance), '#b9c3d0'], ['Funds remaining', money(c.fundsRemaining)]]);
+        const tip = tipRows(p.name, [['Your cash', money(c.cashInvested), 'var(--s7)'], ['Loan + draws', money(c.loanBalance), 'var(--muted-2)'], ['Funds remaining', money(c.fundsRemaining)]]);
         return `<div class="hbar" data-tip="${tip}"><div class="top"><span>${esc(p.name)}</span><span class="v">${money(c.cashInvested + c.loanBalance)}</span></div>
           <div class="track" style="display:flex;gap:2px;background:none">
             <span class="grow" style="--i:${i};flex:none;width:${(c.cashInvested / max) * 100}%;background:var(--s7);border-radius:99px"></span>
-            <span class="grow" style="--i:${i};flex:none;width:${(c.loanBalance / max) * 100}%;background:#b9c3d0;border-radius:99px"></span></div></div>`;
+            <span class="grow" style="--i:${i};flex:none;width:${(c.loanBalance / max) * 100}%;background:var(--muted-2);border-radius:99px"></span></div></div>`;
       }).join('') || '<div class="empty">No deals yet</div>'}</div>
     </div>
     <div class="card rise" style="--i:9">
@@ -131,7 +128,7 @@ export function overviewView(ctx) {
       <div class="card-head"><div class="card-title">Coming up</div><span class="card-sub">Next 45 days</span></div>
       <div class="feed">${upcoming.map(({ m, p }) => `
         <a class="feed-item" href="#/p/${p.id}/timeline" style="color:inherit;grid-template-columns:34px 1fr">
-          <span class="avatar" style="background:var(--accent-soft);color:var(--accent-ink);font-size:10px;line-height:1.1;text-align:center">${new Date(m.date + 'T00:00').toLocaleDateString('en-US', { month: 'short' }).toUpperCase()}<br>${+m.date.slice(8)}</span>
+          <span class="avatar" style="background:var(--accent-soft);color:var(--ink);font-size:10px;line-height:1.1;text-align:center">${new Date(m.date + 'T00:00').toLocaleDateString('en-US', { month: 'short' }).toUpperCase()}<br>${+m.date.slice(8)}</span>
           <div><b>${esc(m.name)}</b><small>${esc(p.name)} · ${relDays(m.date)}</small></div></a>`).join('') || '<div class="empty">Nothing scheduled</div>'}</div>
     </div>
   </div>`;

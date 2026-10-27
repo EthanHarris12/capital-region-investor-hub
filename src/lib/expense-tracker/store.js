@@ -11,13 +11,20 @@ export const DEFAULT_CATEGORIES = [
 ];
 export const EXPENSE_TYPES = ['Materials', 'Labor', 'Subcontractor', 'Permit / Fee', 'Equipment', 'Other'];
 export const PAY_METHODS = ['Check', 'ACH', 'Card', 'Zelle', 'Cash', 'Wire'];
-export const PROJECT_COLORS = ['#2a78d6', '#eb6834', '#1baf7a', '#eda100', '#e87ba4', '#008300', '#6250d6', '#e34948'];
+export const PROJECT_COLORS = ['var(--s1)', 'var(--s2)', 'var(--s3)', 'var(--s4)', 'var(--s5)', 'var(--s6)', 'var(--s7)', 'var(--s8)'];
+// Colors saved before the tracker joined the hub were raw hex; map them onto
+// the theme series so they follow light/dark mode.
+const LEGACY_COLORS = ['#2a78d6', '#eb6834', '#1baf7a', '#eda100', '#e87ba4', '#008300', '#6250d6', '#e34948'];
 export const FLIP_STAGES = ['Acquire', 'Rehab', 'List', 'Under contract', 'Sold'];
 export const BRRRR_STAGES = ['Buy', 'Rehab', 'Rent', 'Refinance', 'Repeat'];
 
 export function load() {
   try { state = JSON.parse(localStorage.getItem(KEY)); } catch { state = null; }
   if (!state || !Array.isArray(state.projects)) { state = seed(); save(false); }
+  for (const p of state.projects) {
+    const i = LEGACY_COLORS.indexOf(String(p.color).toLowerCase());
+    if (i !== -1) p.color = PROJECT_COLORS[i];
+  }
   return state;
 }
 export const getState = () => state;
@@ -27,7 +34,7 @@ export function save(notify = true) {
   try { localStorage.setItem(KEY, JSON.stringify(state)); } catch { /* storage full or blocked */ }
   if (notify) listeners.forEach((f) => f());
 }
-export const subscribe = (f) => listeners.add(f);
+export const subscribe = (f) => { listeners.add(f); return () => listeners.delete(f); };
 export function update(fn, notify = true) { fn(state); save(notify); }
 export const snapshot = () => JSON.stringify(state);
 export function restore(json) { state = JSON.parse(json); save(); }
@@ -83,7 +90,7 @@ function seed() {
 
   const flip = {
     id: uid(), type: 'flip', name: 'Union Street Colonial', address: '412 Union St', city: 'Schenectady, NY 12305',
-    color: '#eb6834', stage: 1, created: D(-64),
+    color: 'var(--s2)', stage: 1, created: D(-64),
     purchase: { price: 132000, closingCosts: 4000, date: D(-62), arv: 315000 },
     financing: { lender: 'Hudson Bridge Capital', loanAmount: 105600, rate: 11, points: 2, fees: 1495, holdback: 85000 },
     cashReserves: 85000,
@@ -160,7 +167,7 @@ function seed() {
   };
   const brrrr = {
     id: uid(), type: 'brrrr', name: 'Elm Street Duplex', address: '88 Elm St', city: 'Troy, NY 12180',
-    color: '#1baf7a', stage: 3, created: D(-150),
+    color: 'var(--s4)', stage: 3, created: D(-150),
     purchase: { price: 128000, closingCosts: 4200, date: D(-146), arv: 285000 },
     financing: { lender: 'Northeast Private Lending', loanAmount: 102400, rate: 10.5, points: 1.5, fees: 1200, holdback: 50000 },
     cashReserves: 85000,
