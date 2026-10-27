@@ -9,8 +9,8 @@ export default function SignUpPage() {
         alignItems: "center",
         justifyContent: "center",
         background:
-          "linear-gradient(170deg, #f1f5f9 0%, #f8fafc 40%, #ffffff 100%)",
-        fontFamily: "'DM Sans', sans-serif",
+          "var(--b-navy-deep)",
+        fontFamily: "inherit",
         padding: 20,
         position: "relative",
         overflow: "hidden",
@@ -24,7 +24,7 @@ export default function SignUpPage() {
           width: 500,
           height: 500,
           background:
-            "radial-gradient(circle, rgba(27,72,18,0.25) 0%, transparent 70%)",
+            "transparent",
           borderRadius: "50%",
           pointerEvents: "none",
         }}
@@ -34,24 +34,24 @@ export default function SignUpPage() {
           <div
             style={{
               fontSize: 10,
-              letterSpacing: 4,
+              letterSpacing: 0.18,
               textTransform: "uppercase",
-              color: "#1b4812",
+              color: "var(--b-white)",
               marginBottom: 8,
-              fontWeight: 800,
+              fontWeight: 400,
             }}
           >
             Empire Real Estate Firm
           </div>
           <h1
             style={{
-              fontFamily: "'Bebas Neue', sans-serif",
-              fontSize: 36,
+              fontFamily: "inherit",
+              fontSize: 48,
               fontWeight: 400,
-              color: "#0f172a",
+              color: "var(--b-white)",
               margin: 0,
-              lineHeight: 1.05,
-              letterSpacing: 2.5,
+              lineHeight: 1,
+              letterSpacing: "-0.01px",
               marginBottom: 10,
             }}
           >
@@ -61,8 +61,8 @@ export default function SignUpPage() {
           </h1>
           <p
             style={{
-              color: "#475569",
-              fontSize: 13,
+              color: "var(--b-gray-text)",
+              fontSize: 16,
               margin: "0 0 20px 0",
               lineHeight: 1.6,
             }}

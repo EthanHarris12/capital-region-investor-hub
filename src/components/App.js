@@ -322,7 +322,7 @@ function exportPDF(title, rows, subtitle, footnote) {
 // ============================================
 // SHARED COMPONENTS
 // ============================================
-const H2 = { fontSize: 24, fontWeight: 700, color: B.white, margin: 0, letterSpacing: -0.6, lineHeight: 1.15 };
+const H2 = { fontSize: 28, fontWeight: 400, color: B.white, margin: 0, letterSpacing: "normal", lineHeight: "32px" };
 
 function prefersReducedMotion() {
   try { return window.matchMedia("(prefers-reduced-motion: reduce)").matches; } catch (e) { return false; }
@@ -376,37 +376,37 @@ function trackGlow(e) {
 function StatCard({ label, value, sub, accent, i }) {
   return (<div className="card card-hover stat-card reveal" onMouseMove={trackGlow} style={{ "--i": i || 0, padding: "14px 16px 14px 18px", minWidth: 0 }}>
     {accent && <span className="accent-bar" style={{ background: accent }} />}
-    <div style={{ fontSize: 10.5, color: B.grayMuted, textTransform: "uppercase", letterSpacing: 1.2, fontWeight: 700, marginBottom: 6 }}>{label}</div>
-    <div style={{ fontSize: 24, fontWeight: 700, color: accent || B.white, letterSpacing: -0.6, lineHeight: 1.1 }}><AnimatedNumber value={value} /></div>
+    <div style={{ fontSize: 10.5, color: B.grayMuted, textTransform: "uppercase", letterSpacing: 0.18, fontWeight: 400, marginBottom: 6 }}>{label}</div>
+    <div style={{ fontSize: 28, fontWeight: 400, color: accent || B.white, letterSpacing: "normal", lineHeight: "32px" }}><AnimatedNumber value={value} /></div>
     {sub && <div style={{ fontSize: 11, color: B.grayMuted, marginTop: 3 }}>{sub}</div>}
   </div>);
 }
 
 function Field({ label, value, onChange, prefix, suffix, type = "number", placeholder, small, step, hint }) {
   return (<div style={{ marginBottom: small ? 10 : 14, flex: small ? 1 : undefined, minWidth: small ? 110 : undefined }}>
-    <label style={{ display: "block", fontSize: 10.5, fontWeight: 700, color: B.grayText, marginBottom: 5, letterSpacing: 0.8, textTransform: "uppercase" }}>{label}</label>
+    <label style={{ display: "block", fontSize: 10.5, fontWeight: 400, color: B.grayText, marginBottom: 5, letterSpacing: 0.18, textTransform: "uppercase" }}>{label}</label>
     <div style={{ position: "relative" }}>
-      {prefix && <span style={{ position: "absolute", left: 12, top: "50%", transform: "translateY(-50%)", color: B.grayMuted, fontSize: 13, fontWeight: 600, pointerEvents: "none" }}>{prefix}</span>}
+      {prefix && <span style={{ position: "absolute", left: 12, top: "50%", transform: "translateY(-50%)", color: B.grayMuted, fontSize: 13, fontWeight: 400, pointerEvents: "none" }}>{prefix}</span>}
       <input type={type} placeholder={placeholder} value={value} step={step} className="field-input"
         onChange={function(e) { onChange(type === "number" ? (e.target.value === "" ? "" : Number(e.target.value)) : e.target.value); }}
         style={{ padding: prefix ? "10px 12px 10px 26px" : suffix ? "10px 40px 10px 12px" : "10px 12px" }} />
-      {suffix && <span style={{ position: "absolute", right: 12, top: "50%", transform: "translateY(-50%)", color: B.grayMuted, fontSize: 11, fontWeight: 600, pointerEvents: "none" }}>{suffix}</span>}
+      {suffix && <span style={{ position: "absolute", right: 12, top: "50%", transform: "translateY(-50%)", color: B.grayMuted, fontSize: 11, fontWeight: 400, pointerEvents: "none" }}>{suffix}</span>}
     </div>
     {hint && <div style={{ fontSize: 10, color: B.grayMuted, marginTop: 4 }}>{hint}</div>}
   </div>);
 }
 
-var sLabel = function(t) { return <div style={{ display: "flex", alignItems: "center", gap: 8, fontSize: 11, fontWeight: 800, color: B.greenLight, margin: "6px 0 12px", textTransform: "uppercase", letterSpacing: 1.6 }}><span style={{ width: 14, height: 2, borderRadius: 2, background: "var(--b-accent)" }} />{t}</div>; };
-var pStyle = { background: B.navyLight, border: "1px solid " + B.grayBorder, borderRadius: 14, padding: 18, marginBottom: 14, boxShadow: "var(--b-shadow-sm)" };
-var pH = function(t) { return <div style={{ fontSize: 10.5, color: B.grayMuted, textTransform: "uppercase", letterSpacing: 1.3, marginBottom: 10, fontWeight: 700 }}>{t}</div>; };
+var sLabel = function(t) { return <div style={{ fontSize: 10, lineHeight: "22px", fontWeight: 400, color: B.white, margin: "8px 0 8px", textTransform: "uppercase", letterSpacing: 0.18 }}>{t}</div>; };
+var pStyle = { background: B.navyLight, border: "1px solid " + B.grayBorder, borderRadius: 12, padding: 24, marginBottom: 12 };
+var pH = function(t) { return <div style={{ fontSize: 10.5, color: B.grayMuted, textTransform: "uppercase", letterSpacing: 0.18, marginBottom: 10, fontWeight: 400 }}>{t}</div>; };
 var rw = function(l, v, bold, pos) { return (<div style={{ display: "flex", justifyContent: "space-between", gap: 12, padding: "5px 0", borderTop: bold ? "1px dashed " + B.grayBorder : "none", marginTop: bold ? 4 : 0, paddingTop: bold ? 8 : 5 }}>
-  <span style={{ fontSize: 12.5, color: bold ? B.white : B.grayText, fontWeight: bold ? 700 : 400 }}>{l}</span>
-  <span className="num" style={{ fontSize: 12.5, fontWeight: bold ? 800 : 500, color: bold ? (pos !== undefined ? (pos ? "var(--b-pos)" : "var(--b-neg)") : B.white) : B.white }}>{v}</span>
+  <span style={{ fontSize: 14, color: bold ? B.white : B.grayText, fontWeight: bold ? 500 : 400 }}>{l}</span>
+  <span className="num" style={{ fontSize: 14, fontWeight: bold ? 500 : 400, color: bold ? (pos !== undefined ? (pos ? "var(--b-pos)" : "var(--b-neg)") : B.white) : B.white }}>{v}</span>
 </div>); };
 
 // Segmented control whose active pill slides between options. The pill is
 // positioned from the active button's box, re-measured on resize.
-function Segmented({ options, value, onChange, size, fill }) {
+function Segmented({ options, value, onChange, size, fill, variant }) {
   var wrapRef = useRef(null);
   var indRef = useRef(null);
   useLayoutEffect(function () {
@@ -426,13 +426,13 @@ function Segmented({ options, value, onChange, size, fill }) {
   }, [value, options.length]);
   var big = size === "lg";
   return (
-    <div ref={wrapRef} className="seg" style={{ width: fill ? "100%" : "max-content" }} role="tablist">
+    <div ref={wrapRef} className={"seg" + (variant === "underline" ? " seg-underline" : "")} style={{ width: fill ? "100%" : "max-content" }} role="tablist">
       <span ref={indRef} className="seg-indicator" style={{ opacity: 0 }} />
       {options.map(function (o) {
         var active = o.key === value;
         return (
           <button key={o.key} data-k={o.key} role="tab" aria-selected={active} className="seg-btn" onClick={function () { onChange(o.key); }}
-            style={{ flex: fill ? 1 : undefined, padding: big ? "9px 16px" : "8px 12px", fontSize: big ? 13 : 11.5, fontWeight: 700, borderRadius: 9, color: active ? B.white : B.grayMuted, letterSpacing: big ? 0 : 0.6, textTransform: big ? "none" : "uppercase", display: "flex", alignItems: "center", justifyContent: "center", gap: 7 }}>
+            style={{ flex: fill ? 1 : undefined, padding: big ? "9px 16px" : "8px 12px", fontSize: big ? 13 : 11.5, fontWeight: 400, borderRadius: 9, color: active ? B.white : B.grayMuted, letterSpacing: big ? 0 : 0.6, textTransform: big ? "none" : "uppercase", display: "flex", alignItems: "center", justifyContent: "center", gap: 7 }}>
             {o.icon && <Icon name={o.icon} size={15} color={active ? "var(--b-accent)" : "currentColor"} />}{o.label}
           </button>
         );
@@ -448,7 +448,7 @@ function StrategyToggle({ value, onChange }) {
 }
 
 function ActionBtn({ label, onClick, primary, small, icon }) {
-  return <button onClick={onClick} className={"btn " + (primary ? "btn-primary" : "btn-ghost")} style={{ padding: small ? "6px 12px" : "8px 15px", fontSize: small ? 11 : 12.5, fontWeight: 700 }}>{icon && <Icon name={icon} size={14} />}{label}</button>;
+  return <button onClick={onClick} className={"btn " + (primary ? "btn-primary" : "btn-ghost")} style={{ padding: small ? "6px 12px" : "8px 15px", fontSize: small ? 11 : 12.5, fontWeight: 400 }}>{icon && <Icon name={icon} size={14} />}{label}</button>;
 }
 
 // Minimal stroke icon set (24px grid, currentColor).
@@ -469,6 +469,7 @@ var ICONS = {
   phone: "M22 16.9v3a2 2 0 0 1-2.2 2 19.8 19.8 0 0 1-8.6-3.1 19.5 19.5 0 0 1-6-6A19.8 19.8 0 0 1 2.1 4.2 2 2 0 0 1 4.1 2h3a2 2 0 0 1 2 1.7c.1.9.4 1.8.7 2.7a2 2 0 0 1-.5 2.1L8 9.8a16 16 0 0 0 6 6l1.3-1.3a2 2 0 0 1 2.1-.4c.9.3 1.8.6 2.7.7a2 2 0 0 1 1.7 2z",
   mail: "M4 4h16a2 2 0 0 1 2 2v12a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2zM22 6l-10 7L2 6",
   trend: "M3 17l6-6 4 4 8-8M15 7h6v6",
+  receipt: "M5 3h14v18l-3-2-2 2-2-2-2 2-2-2-3 2zM9 8h6M9 12h6M9 16h4",
 };
 function Icon({ name, size, color }) {
   return (
@@ -512,8 +513,8 @@ function EquityChart({ rows }) {
       </svg>
       {h && (
         <div className="tooltip" style={{ left: ((padL + hover * slot + slot / 2) / W * 100) + "%", top: ((padT + plotH - (h.equity / top) * plotH) / H * 100) + "%" }}>
-          <div style={{ fontWeight: 800, color: B.white, marginBottom: 4 }}>Year {h.y}</div>
-          {[["Value", fmtD(h.value)], ["Loan balance", fmtD(h.balance)], ["Equity", fmtD(h.equity)], ["Cashflow", fmtD(h.cf)]].map(function (p) { return <div key={p[0]} style={{ display: "flex", justifyContent: "space-between", gap: 14, color: B.grayText }}><span>{p[0]}</span><span className="num" style={{ color: B.white, fontWeight: 600 }}>{p[1]}</span></div>; })}
+          <div style={{ fontWeight: 400, color: B.white, marginBottom: 4 }}>Year {h.y}</div>
+          {[["Value", fmtD(h.value)], ["Loan balance", fmtD(h.balance)], ["Equity", fmtD(h.equity)], ["Cashflow", fmtD(h.cf)]].map(function (p) { return <div key={p[0]} style={{ display: "flex", justifyContent: "space-between", gap: 14, color: B.grayText }}><span>{p[0]}</span><span className="num" style={{ color: B.white, fontWeight: 400 }}>{p[1]}</span></div>; })}
         </div>
       )}
     </div>
@@ -799,7 +800,7 @@ function DealAnalyzer({ onTrack }) {
         <ActionBtn label="Save Analysis" onClick={handleSave} primary />
         <ActionBtn label={"My Saved (" + savedDeals.length + ")"} onClick={function() { setShowSaved(!showSaved); }} />
         <ActionBtn label="Export PDF" onClick={handleExportPDF} />
-        {saveMsg && <span style={{ fontSize: 12, color: "var(--b-pos)", fontWeight: 600 }}>{saveMsg}</span>}
+        {saveMsg && <span style={{ fontSize: 12, color: "var(--b-pos)", fontWeight: 400 }}>{saveMsg}</span>}
       </div>
       {showSaved && savedDeals.length > 0 && (
         <div style={{ ...pStyle, marginBottom: 18, maxHeight: 200, overflowY: "auto" }}>
@@ -807,7 +808,7 @@ function DealAnalyzer({ onTrack }) {
           {savedDeals.map(function(s) { return (
             <div key={s.id} style={{ display: "flex", justifyContent: "space-between", alignItems: "center", padding: "6px 0", borderBottom: "1px solid var(--b-subtle)" }}>
               <div style={{ cursor: "pointer", flex: 1 }} onClick={function() { handleLoad(s); }}>
-                <div style={{ fontSize: 13, color: B.white, fontWeight: 600 }}>{s.label}</div>
+                <div style={{ fontSize: 13, color: B.white, fontWeight: 400 }}>{s.label}</div>
                 <div style={{ fontSize: 10, color: B.grayMuted }}>{(s.strategy || "").toUpperCase()} · {new Date(s.savedAt).toLocaleDateString()}</div>
               </div>
               <button onClick={function() { handleDelete(s.id); }} style={{ fontSize: 11, color: "var(--b-neg)", background: "none", border: "none", cursor: "pointer", padding: "4px 8px" }}>✕</button>
@@ -862,8 +863,8 @@ function DealAnalyzer({ onTrack }) {
             </div>
 
             <div style={{ background: d.purchasePrice <= flipMao ? "color-mix(in srgb, var(--b-pos) 8%, transparent)" : "color-mix(in srgb, var(--b-neg) 8%, transparent)", border: "1px solid " + (d.purchasePrice <= flipMao ? "color-mix(in srgb, var(--b-pos) 25%, transparent)" : "color-mix(in srgb, var(--b-neg) 25%, transparent)"), borderRadius: 10, padding: 14, marginBottom: 14 }}>
-              <div style={{ fontSize: 10, fontWeight: 700, textTransform: "uppercase", letterSpacing: 1.5, marginBottom: 6, color: d.purchasePrice <= flipMao ? "var(--b-pos)" : "var(--b-neg)" }}>{d.purchasePrice <= flipMao ? "Purchase is at or below MAO" : "Purchase exceeds MAO"}</div>
-              <div style={{ fontSize: 13, color: B.white, fontWeight: 600 }}>{d.flipMaoPct}% × {fmtD(d.flipArv)} − {fmtD(d.flipRehab)} = <span style={{ color: "var(--b-pos)" }}>{fmtD(flipMao)}</span></div>
+              <div style={{ fontSize: 10, fontWeight: 400, textTransform: "uppercase", letterSpacing: 0.18, marginBottom: 6, color: d.purchasePrice <= flipMao ? "var(--b-pos)" : "var(--b-neg)" }}>{d.purchasePrice <= flipMao ? "Purchase is at or below MAO" : "Purchase exceeds MAO"}</div>
+              <div style={{ fontSize: 13, color: B.white, fontWeight: 400 }}>{d.flipMaoPct}% × {fmtD(d.flipArv)} − {fmtD(d.flipRehab)} = <span style={{ color: "var(--b-pos)" }}>{fmtD(flipMao)}</span></div>
               <div style={{ fontSize: 11, color: B.grayText, marginTop: 4 }}>Your purchase: {fmtD(d.purchasePrice)} ({d.purchasePrice <= flipMao ? "within" : fmtD(d.purchasePrice - flipMao) + " over"} MAO)</div>
             </div>
 
@@ -931,7 +932,7 @@ function DealAnalyzer({ onTrack }) {
             </div>
 
             <div style={{ background: brrrrCashLeftIn <= 0 ? "color-mix(in srgb, var(--b-pos) 8%, transparent)" : "var(--b-subtle)", border: "1px solid " + (brrrrCashLeftIn <= 0 ? "color-mix(in srgb, var(--b-pos) 25%, transparent)" : B.grayBorder), borderRadius: 10, padding: 14, marginBottom: 14 }}>
-              <div style={{ fontSize: 10, fontWeight: 700, textTransform: "uppercase", letterSpacing: 1.5, marginBottom: 6, color: brrrrCashLeftIn <= 0 ? "var(--b-pos)" : B.grayText }}>{brrrrCashLeftIn <= 0 ? "Full cash recovery + " + fmtD(Math.abs(brrrrCashLeftIn)) + " pulled out" : fmtD(brrrrCashLeftIn) + " left in the deal"}</div>
+              <div style={{ fontSize: 10, fontWeight: 400, textTransform: "uppercase", letterSpacing: 0.18, marginBottom: 6, color: brrrrCashLeftIn <= 0 ? "var(--b-pos)" : B.grayText }}>{brrrrCashLeftIn <= 0 ? "Full cash recovery + " + fmtD(Math.abs(brrrrCashLeftIn)) + " pulled out" : fmtD(brrrrCashLeftIn) + " left in the deal"}</div>
               <div style={{ fontSize: 12, color: B.grayText }}>Total All-In: {fmtD(brrrrTotalAllIn)} | Refi Loan ({d.brrrrRefiLtv}% LTV): {fmtD(brrrrRefiLoan)}</div>
             </div>
 
@@ -1083,7 +1084,7 @@ function DealAnalyzer({ onTrack }) {
             {pH("Equity Build \u2014 " + hold.years + "-Year Hold")}
             <EquityChart rows={hold.rows} />
             <div style={{ display: "grid", gridTemplateColumns: "32px 1fr 1fr 1fr 1fr", gap: "4px 10px", fontSize: 11.5, marginTop: 14 }}>
-              <span style={{ color: B.grayMuted, fontWeight: 700 }}>Yr</span><span style={{ color: B.grayMuted, fontWeight: 700 }}>Value</span><span style={{ color: B.grayMuted, fontWeight: 700 }}>NOI</span><span style={{ color: B.grayMuted, fontWeight: 700 }}>Cashflow</span><span style={{ color: B.grayMuted, fontWeight: 700 }}>Equity</span>
+              <span style={{ color: B.grayMuted, fontWeight: 400 }}>Yr</span><span style={{ color: B.grayMuted, fontWeight: 400 }}>Value</span><span style={{ color: B.grayMuted, fontWeight: 400 }}>NOI</span><span style={{ color: B.grayMuted, fontWeight: 400 }}>Cashflow</span><span style={{ color: B.grayMuted, fontWeight: 400 }}>Equity</span>
               {hold.rows.map(function(p) { return (<div key={p.y} className="num" style={{display:"contents"}}><span style={{ color: B.grayText }}>{p.y}</span><span style={{ color: B.white }}>{fmtC(Math.round(p.value))}</span><span style={{ color: B.white }}>{fmtC(Math.round(p.noi))}</span><span style={{ color: p.cf >= 0 ? "var(--b-pos)" : "var(--b-neg)" }}>{fmtC(Math.round(p.cf))}</span><span style={{ color: B.white }}>{fmtC(Math.round(p.equity))}</span></div>); })}
             </div>
             <div style={{ fontSize: 10, color: B.grayMuted, marginTop: 8 }}>{d.appreciationPct}% appreciation, {d.rentGrowthPct}% rent growth, {d.expenseGrowthPct}% expense growth. Year 1 uses today&apos;s figures.</div>
@@ -1197,7 +1198,7 @@ function MarketSnapshots({ onTrack }) {
         <div style={{ display: "flex", gap: 10, marginBottom: 20, flexWrap: "wrap" }}>
           {[0, 1, 2].map(function(idx) { return (
             <div key={idx} style={{ minWidth: 160, flex: 1 }}>
-              <label style={{ display: "block", fontSize: 10, fontWeight: 700, color: B.grayText, marginBottom: 4, letterSpacing: 1, textTransform: "uppercase" }}>Town {idx + 1}{idx === 2 ? " (optional)" : ""}</label>
+              <label style={{ display: "block", fontSize: 10, fontWeight: 400, color: B.grayText, marginBottom: 4, letterSpacing: 0.18, textTransform: "uppercase" }}>Town {idx + 1}{idx === 2 ? " (optional)" : ""}</label>
               <select value={comp[idx]} onChange={function(e) { var next = comp.slice(); next[idx] = e.target.value; setComp(next); }}
                 className="field-input" style={{ padding: "10px 12px" }}>
                 {idx === 2 && <option value="">\u2014 None \u2014</option>}
@@ -1211,8 +1212,8 @@ function MarketSnapshots({ onTrack }) {
             <table style={{ width: "100%", borderCollapse: "collapse", fontSize: 13 }}>
               <thead>
                 <tr style={{ borderBottom: "2px solid " + B.green }}>
-                  <th style={{ textAlign: "left", padding: "10px 14px", color: B.grayMuted, fontWeight: 700, fontSize: 10, textTransform: "uppercase", letterSpacing: 1.5 }}>Metric</th>
-                  {compTowns.map(function(t) { return <th key={t} style={{ textAlign: "right", padding: "10px 14px", color: B.greenLight, fontWeight: 800, fontSize: 12 }}>{t}</th>; })}
+                  <th style={{ textAlign: "left", padding: "10px 14px", color: B.grayMuted, fontWeight: 400, fontSize: 10, textTransform: "uppercase", letterSpacing: 0.18 }}>Metric</th>
+                  {compTowns.map(function(t) { return <th key={t} style={{ textAlign: "right", padding: "10px 14px", color: B.greenLight, fontWeight: 400, fontSize: 12 }}>{t}</th>; })}
                 </tr>
               </thead>
               <tbody>
@@ -1229,7 +1230,7 @@ function MarketSnapshots({ onTrack }) {
                       {compTowns.map(function(t) {
                         var v = marketValue(t, met.key);
                         var isBest = bestVal !== null && Number(v) === bestVal && compTowns.length > 1;
-                        return <td key={t} style={{ textAlign: "right", padding: "8px 14px", fontWeight: 600, color: isBest ? "var(--b-pos)" : B.white }}>{met.fmt(v)}</td>;
+                        return <td key={t} style={{ textAlign: "right", padding: "8px 14px", fontWeight: 400, color: isBest ? "var(--b-pos)" : B.white }}>{met.fmt(v)}</td>;
                       })}
                     </tr>
                   );
@@ -1240,7 +1241,7 @@ function MarketSnapshots({ onTrack }) {
             <div style={{ marginTop: 16 }}>
               {compTowns.map(function(t) { return (
                 <div key={t} style={{ ...pStyle, padding: 12 }}>
-                  <div style={{ fontSize: 13, fontWeight: 700, color: B.greenLight, marginBottom: 4 }}>{t}</div>
+                  <div style={{ fontSize: 13, fontWeight: 400, color: B.greenLight, marginBottom: 4 }}>{t}</div>
                   <div style={{ fontSize: 12, color: B.grayText, lineHeight: 1.5 }}>{MARKET_DATA[t].description}</div>
                 </div>
               ); })}
@@ -1258,7 +1259,7 @@ function MarketSnapshots({ onTrack }) {
         <ActionBtn label="Compare Towns" onClick={function() { setCompareMode(true); }} primary />
       </div>
       <div style={{ background: "color-mix(in srgb, var(--b-accent) 8%, transparent)", border: "1px solid color-mix(in srgb, var(--b-accent) 20%, transparent)", borderRadius: 10, padding: 14, marginBottom: 20 }}>
-        <div style={{ fontSize: 10, color: B.greenLight, textTransform: "uppercase", letterSpacing: 1.5, marginBottom: 6, fontWeight: 700 }}>Data Sources</div>
+        <div style={{ fontSize: 10, color: B.greenLight, textTransform: "uppercase", letterSpacing: 0.18, marginBottom: 6, fontWeight: 400 }}>Data Sources</div>
         <p style={{ fontSize: 12, color: B.grayText, margin: 0, lineHeight: 1.6 }}>Market data compiled from the Global MLS (GCAR/CRMLS), U.S. Census Bureau (ACS), Zillow Observed Rent Index (ZORI), CoStar rental analytics, and local assessor records. School district grades from Niche.com. Contact Ethan for current deal-specific data.</p>
       </div>
       <div style={{ display: "flex", gap: 6, flexWrap: "wrap", marginBottom: 20 }}>
@@ -1289,17 +1290,17 @@ function MarketSnapshots({ onTrack }) {
       <div style={pStyle}>
         {pH("Demographics & Schools")}
         {[["Median HH Income", fmtD(m.medianHHIncome)], ["Pop. Growth", (m.popGrowth >= 0 ? "+" : "") + fmtP(m.popGrowth) + " /yr"], ["Walk Score", m.walkScore + " / 100"]].map(function(pair, i) { return (
-          <div key={i} style={{ display: "flex", justifyContent: "space-between", padding: "4px 0" }}><span style={{ fontSize: 12, color: B.grayText }}>{pair[0]}</span><span style={{ fontSize: 12, color: B.white, fontWeight: 600 }}>{pair[1]}</span></div>
+          <div key={i} style={{ display: "flex", justifyContent: "space-between", padding: "4px 0" }}><span style={{ fontSize: 12, color: B.grayText }}>{pair[0]}</span><span style={{ fontSize: 12, color: B.white, fontWeight: 400 }}>{pair[1]}</span></div>
         ); })}
         <div style={{ borderTop: "1px solid color-mix(in srgb, var(--b-accent) 15%, transparent)", marginTop: 6, paddingTop: 8 }}>
-          <div style={{ display: "flex", justifyContent: "space-between", padding: "4px 0" }}><span style={{ fontSize: 12, color: B.grayText }}>School District</span><span style={{ fontSize: 12, color: B.white, fontWeight: 600 }}>{m.schoolDistrict}</span></div>
-          <div style={{ display: "flex", justifyContent: "space-between", padding: "4px 0" }}><span style={{ fontSize: 12, color: B.grayText }}>Overall Grade</span><span style={{ fontSize: 12, color: rc(m.schoolRating), fontWeight: 700 }}>{m.schoolRating}</span></div>
+          <div style={{ display: "flex", justifyContent: "space-between", padding: "4px 0" }}><span style={{ fontSize: 12, color: B.grayText }}>School District</span><span style={{ fontSize: 12, color: B.white, fontWeight: 400 }}>{m.schoolDistrict}</span></div>
+          <div style={{ display: "flex", justifyContent: "space-between", padding: "4px 0" }}><span style={{ fontSize: 12, color: B.grayText }}>Overall Grade</span><span style={{ fontSize: 12, color: rc(m.schoolRating), fontWeight: 400 }}>{m.schoolRating}</span></div>
           <FairHousingNotice />
         </div>
       </div>
       <div style={pStyle}>
         <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", gap: 10, flexWrap: "wrap", marginBottom: 12 }}>
-          <div style={{ fontSize: 10.5, color: B.grayMuted, textTransform: "uppercase", letterSpacing: 1.3, fontWeight: 700 }}>Market Rankings</div>
+          <div style={{ fontSize: 10.5, color: B.grayMuted, textTransform: "uppercase", letterSpacing: 0.18, fontWeight: 400 }}>Market Rankings</div>
           <div className="nav-scroll"><Segmented value={rankBy} onChange={setRankBy} options={RANK_METRICS.map(function(r) { return { key: r.key, label: r.short }; })} /></div>
         </div>
         {(function() {
@@ -1314,7 +1315,7 @@ function MarketSnapshots({ onTrack }) {
                 <span className="num" style={{ fontSize: 10.5, color: B.grayMuted, width: 18, textAlign: "right" }}>{i + 1}</span>
                 <span style={{ fontSize: 12, color: on ? B.white : B.grayText, width: 120, fontWeight: on ? 700 : 500, flexShrink: 0, whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>{t}</span>
                 <div style={{ flex: 1, height: 8, background: "var(--b-subtle)", borderRadius: 4, overflow: "hidden" }}><div className="bar-grow" style={{ "--i": i, width: (mx > 0 ? v / mx * 100 : 0) + "%", height: "100%", background: on ? "var(--b-accent)" : "color-mix(in srgb, var(--b-accent) 35%, transparent)", borderRadius: 4 }} /></div>
-                <span className="num" style={{ fontSize: 12, color: on ? B.white : B.grayText, width: 52, textAlign: "right", fontWeight: 700 }}>{metric.fmt(v)}</span>
+                <span className="num" style={{ fontSize: 12, color: on ? B.white : B.grayText, width: 52, textAlign: "right", fontWeight: 400 }}>{metric.fmt(v)}</span>
               </div>);
             })}
             <div style={{ fontSize: 10, color: B.grayMuted, marginTop: 8 }}>{metric.note} Click a town to open it.</div>
@@ -1412,7 +1413,7 @@ function EquityEstimator({ onTrack }) {
         <ActionBtn label="Save Property" onClick={handleSave} primary />
         <ActionBtn label={"My Properties (" + savedEquities.length + ")"} onClick={function() { setShowSaved(!showSaved); }} />
         <ActionBtn label="Export PDF" onClick={handleExportPDF} />
-        {saveMsg && <span style={{ fontSize: 12, color: "var(--b-pos)", fontWeight: 600 }}>{saveMsg}</span>}
+        {saveMsg && <span style={{ fontSize: 12, color: "var(--b-pos)", fontWeight: 400 }}>{saveMsg}</span>}
       </div>
       {showSaved && savedEquities.length > 0 && (
         <div style={{ ...pStyle, marginBottom: 18, maxHeight: 200, overflowY: "auto" }}>
@@ -1420,7 +1421,7 @@ function EquityEstimator({ onTrack }) {
           {savedEquities.map(function(s) { return (
             <div key={s.id} style={{ display: "flex", justifyContent: "space-between", alignItems: "center", padding: "6px 0", borderBottom: "1px solid var(--b-subtle)" }}>
               <div style={{ cursor: "pointer", flex: 1 }} onClick={function() { handleLoad(s); }}>
-                <div style={{ fontSize: 13, color: B.white, fontWeight: 600 }}>{s.label}</div>
+                <div style={{ fontSize: 13, color: B.white, fontWeight: 400 }}>{s.label}</div>
                 <div style={{ fontSize: 10, color: B.grayMuted }}>{new Date(s.savedAt).toLocaleDateString()}</div>
               </div>
               <button onClick={function() { handleDelete(s.id); }} style={{ fontSize: 11, color: "var(--b-neg)", background: "none", border: "none", cursor: "pointer", padding: "4px 8px" }}>✕</button>
@@ -1476,9 +1477,9 @@ function EquityEstimator({ onTrack }) {
           <div className="stat-row"><StatCard label="Current LTV" value={fmtP(eqf.ltvNow)} accent={eqf.ltvNow <= 75 ? "var(--b-pos)" : "var(--b-warn)"} /><StatCard label="HELOC Potential" value={fmtC(Math.round(eqf.heloc))} sub="at 80% combined LTV" /></div>
 
           <div style={{ background: "color-mix(in srgb, var(--b-accent) 8%, transparent)", border: "1px solid color-mix(in srgb, var(--b-accent) 20%, transparent)", borderRadius: 8, padding: 12, marginBottom: 14 }}>
-            <div style={{ fontSize: 10, color: B.greenLight, textTransform: "uppercase", letterSpacing: 1.5, marginBottom: 6, fontWeight: 700 }}>How is Est. Value calculated?</div>
+            <div style={{ fontSize: 10, color: B.greenLight, textTransform: "uppercase", letterSpacing: 0.18, marginBottom: 6, fontWeight: 400 }}>How is Est. Value calculated?</div>
             <p style={{ fontSize: 12, color: B.grayText, margin: 0, lineHeight: 1.6 }}>{eqf.usingOverride ? "You entered a known current value, so it's used as-is instead of the appreciation estimate." : "We apply " + eqf.appPct + "% annual appreciation (5.5% is the Capital Region average) to your original purchase price, compounded over the years you've owned the property."}</p>
-            <div className="num" style={{ fontSize: 12, color: B.white, fontWeight: 600, marginTop: 8, background: "var(--b-subtle)", padding: "6px 10px", borderRadius: 6 }}>
+            <div className="num" style={{ fontSize: 12, color: B.white, fontWeight: 400, marginTop: 8, background: "var(--b-subtle)", padding: "6px 10px", borderRadius: 6 }}>
               {eqf.usingOverride ? <>Owner value = <span style={{ color: "var(--b-pos)" }}>{fmtD(estVal)}</span> <span style={{ color: B.grayMuted, fontWeight: 400 }}>(formula: {fmtD(eqf.estimated)})</span></> : <>{fmtD(d.purchasePrice)} × ({(1 + eqf.appPct / 100).toFixed(3)})<sup>{yrs}</sup> = <span style={{ color: "var(--b-pos)" }}>{fmtD(estVal)}</span></>}
             </div>
             <p style={{ fontSize: 10, color: B.grayMuted, margin: "6px 0 0 0" }}>This is an estimate. For a precise current value, request a comparative market analysis (CMA) from Ethan.</p>
@@ -1500,13 +1501,13 @@ function EquityEstimator({ onTrack }) {
             {rw("Annual Cashflow", fmtD(annCF), false)}
           </div>
 
-          <div style={pStyle}>{pH("Performance")}{[["Years Owned", yrs], ["Total Appreciation", fmtD(estVal - d.purchasePrice)], ["Total Return (est.)", fmtD(totRet)]].map(function(pair, i) { return (<div key={i} style={{ display: "flex", justifyContent: "space-between", padding: "4px 0" }}><span style={{ fontSize: 12, color: B.grayText }}>{pair[0]}</span><span style={{ fontSize: 12, color: B.white, fontWeight: 600 }}>{pair[1]}</span></div>); })}</div>
+          <div style={pStyle}>{pH("Performance")}{[["Years Owned", yrs], ["Total Appreciation", fmtD(estVal - d.purchasePrice)], ["Total Return (est.)", fmtD(totRet)]].map(function(pair, i) { return (<div key={i} style={{ display: "flex", justifyContent: "space-between", padding: "4px 0" }}><span style={{ fontSize: 12, color: B.grayText }}>{pair[0]}</span><span style={{ fontSize: 12, color: B.white, fontWeight: 400 }}>{pair[1]}</span></div>); })}</div>
 
           <div style={{ background: "color-mix(in srgb, var(--b-accent) 10%, transparent)", border: "1px solid color-mix(in srgb, var(--b-accent) 25%, transparent)", borderRadius: 10, padding: 16, marginBottom: 14 }}>
-            <div style={{ fontSize: 10, color: B.greenLight, textTransform: "uppercase", letterSpacing: 1.5, marginBottom: 8, fontWeight: 700 }}>Cash-Out Refi ({eqf.refiLtv}% LTV)</div>
-            {[["New Loan", fmtD(refiLoan)], ["Cash Out", fmtD(Math.max(0, cashOut))], ["New Payment", fmtD(refiPmt) + "/mo"], ["Net CF After Refi", fmtD(d.rent - totalMonthlyExp - refiPmt) + "/mo"]].map(function(pair, i) { return (<div key={i} style={{ display: "flex", justifyContent: "space-between", padding: "4px 0" }}><span style={{ fontSize: 12, color: B.greenLight }}>{pair[0]}</span><span style={{ fontSize: 12, color: B.white, fontWeight: 700 }}>{pair[1]}</span></div>); })}
+            <div style={{ fontSize: 10, color: B.greenLight, textTransform: "uppercase", letterSpacing: 0.18, marginBottom: 8, fontWeight: 400 }}>Cash-Out Refi ({eqf.refiLtv}% LTV)</div>
+            {[["New Loan", fmtD(refiLoan)], ["Cash Out", fmtD(Math.max(0, cashOut))], ["New Payment", fmtD(refiPmt) + "/mo"], ["Net CF After Refi", fmtD(d.rent - totalMonthlyExp - refiPmt) + "/mo"]].map(function(pair, i) { return (<div key={i} style={{ display: "flex", justifyContent: "space-between", padding: "4px 0" }}><span style={{ fontSize: 12, color: B.greenLight }}>{pair[0]}</span><span style={{ fontSize: 12, color: B.white, fontWeight: 400 }}>{pair[1]}</span></div>); })}
           </div>
-          {eq > 100000 && <div style={{ background: "color-mix(in srgb, var(--b-pos) 6%, transparent)", border: "1px solid color-mix(in srgb, var(--b-pos) 15%, transparent)", borderRadius: 10, padding: 14 }}><div style={{ fontSize: 11, fontWeight: 700, color: "var(--b-pos)", marginBottom: 4 }}>1031 Exchange Opportunity</div><p style={{ fontSize: 12, color: B.grayText, margin: 0, lineHeight: 1.5 }}>With {fmtC(eq)} in equity, you may qualify for a 1031 exchange into a larger property. Let&apos;s talk strategy.</p></div>}
+          {eq > 100000 && <div style={{ background: "color-mix(in srgb, var(--b-pos) 6%, transparent)", border: "1px solid color-mix(in srgb, var(--b-pos) 15%, transparent)", borderRadius: 10, padding: 14 }}><div style={{ fontSize: 11, fontWeight: 400, color: "var(--b-pos)", marginBottom: 4 }}>1031 Exchange Opportunity</div><p style={{ fontSize: 12, color: B.grayText, margin: 0, lineHeight: 1.5 }}>With {fmtC(eq)} in equity, you may qualify for a 1031 exchange into a larger property. Let&apos;s talk strategy.</p></div>}
         </div>
       </div>
     </div>
@@ -1611,14 +1612,14 @@ function PortfolioDashboard({ onTrack }) {
                   return (
                     <div key={p.id} className="card card-hover reveal" style={{ ...pStyle, "--i": i }}>
                       <div style={{ marginBottom: 8 }}>
-                        <div style={{ fontSize: 14, color: B.white, fontWeight: 700 }}>{p.label}</div>
+                        <div style={{ fontSize: 14, color: B.white, fontWeight: 400 }}>{p.label}</div>
                         <div style={{ fontSize: 10, color: B.grayMuted }}>Purchased {p.purchaseYear} · Saved {new Date(p.savedAt).toLocaleDateString()}</div>
                       </div>
                       <div style={{ display: "flex", gap: 20, flexWrap: "wrap" }}>
-                        <div><div style={{ fontSize: 10, color: B.grayMuted, textTransform: "uppercase", letterSpacing: 1 }}>Est. Value</div><div style={{ fontSize: 16, fontWeight: 700, color: B.white, fontVariantNumeric: "tabular-nums" }}>{fmtC(val)}</div></div>
-                        <div><div style={{ fontSize: 10, color: B.grayMuted, textTransform: "uppercase", letterSpacing: 1 }}>Equity</div><div style={{ fontSize: 16, fontWeight: 700, color: "var(--b-pos)", fontVariantNumeric: "tabular-nums" }}>{fmtC(equity)}</div></div>
-                        <div><div style={{ fontSize: 10, color: B.grayMuted, textTransform: "uppercase", letterSpacing: 1 }}>Annual CF</div><div style={{ fontSize: 16, fontWeight: 700, color: cf >= 0 ? "var(--b-pos)" : "var(--b-neg)", fontVariantNumeric: "tabular-nums" }}>{fmtD(cf)}</div></div>
-                        <div><div style={{ fontSize: 10, color: B.grayMuted, textTransform: "uppercase", letterSpacing: 1 }}>Debt</div><div style={{ fontSize: 16, fontWeight: 700, color: B.white, fontVariantNumeric: "tabular-nums" }}>{fmtC(p.bal || 0)}</div></div>
+                        <div><div style={{ fontSize: 10, color: B.grayMuted, textTransform: "uppercase", letterSpacing: 0.18 }}>Est. Value</div><div style={{ fontSize: 16, fontWeight: 400, color: B.white, fontVariantNumeric: "tabular-nums" }}>{fmtC(val)}</div></div>
+                        <div><div style={{ fontSize: 10, color: B.grayMuted, textTransform: "uppercase", letterSpacing: 0.18 }}>Equity</div><div style={{ fontSize: 16, fontWeight: 400, color: "var(--b-pos)", fontVariantNumeric: "tabular-nums" }}>{fmtC(equity)}</div></div>
+                        <div><div style={{ fontSize: 10, color: B.grayMuted, textTransform: "uppercase", letterSpacing: 0.18 }}>Annual CF</div><div style={{ fontSize: 16, fontWeight: 400, color: cf >= 0 ? "var(--b-pos)" : "var(--b-neg)", fontVariantNumeric: "tabular-nums" }}>{fmtD(cf)}</div></div>
+                        <div><div style={{ fontSize: 10, color: B.grayMuted, textTransform: "uppercase", letterSpacing: 0.18 }}>Debt</div><div style={{ fontSize: 16, fontWeight: 400, color: B.white, fontVariantNumeric: "tabular-nums" }}>{fmtC(p.bal || 0)}</div></div>
                       </div>
                     </div>
                   );
@@ -1632,7 +1633,7 @@ function PortfolioDashboard({ onTrack }) {
               <div style={{ display: "grid", gap: 10 }}>
                 {deals.map(function(dl, i) { return (
                   <div key={dl.id} className="card card-hover reveal" style={{ ...pStyle, "--i": i }}>
-                    <div style={{ fontSize: 14, color: B.white, fontWeight: 700 }}>{dl.label}</div>
+                    <div style={{ fontSize: 14, color: B.white, fontWeight: 400 }}>{dl.label}</div>
                     <div style={{ fontSize: 10, color: B.grayMuted }}>{(dl.strategy || "ltr").toUpperCase()} · {dl.units} units · {fmtD(dl.purchasePrice)} · {new Date(dl.savedAt).toLocaleDateString()}</div>
                   </div>
                 ); })}
@@ -1774,14 +1775,14 @@ function DealComparison({ onTrack }) {
         <div>
           <div style={{ display: "flex", gap: 14, marginBottom: 20 }}>
             <div style={{ flex: 1 }}>
-              <label style={{ display: "block", fontSize: 10, fontWeight: 700, color: B.grayText, marginBottom: 4, letterSpacing: 1, textTransform: "uppercase" }}>Analysis A</label>
+              <label style={{ display: "block", fontSize: 10, fontWeight: 400, color: B.grayText, marginBottom: 4, letterSpacing: 0.18, textTransform: "uppercase" }}>Analysis A</label>
               <select value={selA} onChange={function(e) { setSelA(e.target.value); }} className="field-input" style={{ padding: "10px 12px" }}>
                 <option value="">{"\u2014 Select \u2014"}</option>
                 {allItems.map(function(item) { return <option key={item.id} value={String(item.id)}>{item.label} ({item._type})</option>; })}
               </select>
             </div>
             <div style={{ flex: 1 }}>
-              <label style={{ display: "block", fontSize: 10, fontWeight: 700, color: B.grayText, marginBottom: 4, letterSpacing: 1, textTransform: "uppercase" }}>Analysis B</label>
+              <label style={{ display: "block", fontSize: 10, fontWeight: 400, color: B.grayText, marginBottom: 4, letterSpacing: 0.18, textTransform: "uppercase" }}>Analysis B</label>
               <select value={selB} onChange={function(e) { setSelB(e.target.value); }} className="field-input" style={{ padding: "10px 12px" }}>
                 <option value="">{"\u2014 Select \u2014"}</option>
                 {allItems.map(function(item) { return <option key={item.id} value={String(item.id)}>{item.label} ({item._type})</option>; })}
@@ -1793,9 +1794,9 @@ function DealComparison({ onTrack }) {
               <table style={{ width: "100%", borderCollapse: "collapse", fontSize: 13 }}>
                 <thead>
                   <tr style={{ borderBottom: "2px solid " + B.green }}>
-                    <th style={{ textAlign: "left", padding: "10px 14px", color: B.grayMuted, fontWeight: 700, fontSize: 10, textTransform: "uppercase", letterSpacing: 1.5 }}>Metric</th>
-                    <th style={{ textAlign: "right", padding: "10px 14px", color: B.greenLight, fontWeight: 800, fontSize: 12 }}>{itemA.label}</th>
-                    <th style={{ textAlign: "right", padding: "10px 14px", color: B.greenLight, fontWeight: 800, fontSize: 12 }}>{itemB.label}</th>
+                    <th style={{ textAlign: "left", padding: "10px 14px", color: B.grayMuted, fontWeight: 400, fontSize: 10, textTransform: "uppercase", letterSpacing: 0.18 }}>Metric</th>
+                    <th style={{ textAlign: "right", padding: "10px 14px", color: B.greenLight, fontWeight: 400, fontSize: 12 }}>{itemA.label}</th>
+                    <th style={{ textAlign: "right", padding: "10px 14px", color: B.greenLight, fontWeight: 400, fontSize: 12 }}>{itemB.label}</th>
                   </tr>
                 </thead>
                 <tbody>
@@ -1804,8 +1805,8 @@ function DealComparison({ onTrack }) {
                     return (
                       <tr key={i} style={{ borderBottom: "1px solid " + B.grayBorder }}>
                         <td style={{ padding: "8px 14px", color: B.grayText, fontWeight: 500 }}>{a ? a[0] : (b ? b[0] : "")}</td>
-                        <td style={{ textAlign: "right", padding: "8px 14px", fontWeight: 600, color: B.white }}>{a ? a[1] : "\u2014"}</td>
-                        <td style={{ textAlign: "right", padding: "8px 14px", fontWeight: 600, color: B.white }}>{b ? b[1] : "\u2014"}</td>
+                        <td style={{ textAlign: "right", padding: "8px 14px", fontWeight: 400, color: B.white }}>{a ? a[1] : "\u2014"}</td>
+                        <td style={{ textAlign: "right", padding: "8px 14px", fontWeight: 400, color: B.white }}>{b ? b[1] : "\u2014"}</td>
                       </tr>
                     );
                   })}
@@ -1901,8 +1902,8 @@ function ActivityLog() {
           <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(140px, 1fr))", gap: 8 }}>
             {sourceBreakdown.map(function(s) { return (
               <div key={s.source} style={{ background: "var(--b-subtle)", borderRadius: 6, padding: "8px 10px", borderLeft: "2px solid " + (s.source === "direct" ? B.grayMuted : B.greenLight) }}>
-                <div style={{ fontSize: 10, color: B.grayMuted, textTransform: "uppercase", letterSpacing: 1, fontWeight: 700 }}>{s.source}</div>
-                <div style={{ fontSize: 16, color: B.white, fontWeight: 700 }}>{s.count}</div>
+                <div style={{ fontSize: 10, color: B.grayMuted, textTransform: "uppercase", letterSpacing: 0.18, fontWeight: 400 }}>{s.source}</div>
+                <div style={{ fontSize: 16, color: B.white, fontWeight: 400 }}>{s.count}</div>
                 <div style={{ fontSize: 9, color: B.grayText }}>{s.prospects} prospects</div>
               </div>
             ); })}
@@ -1911,10 +1912,10 @@ function ActivityLog() {
       )}
 
       <div style={{ display: "flex", gap: 6, marginBottom: 16, flexWrap: "wrap" }}>
-        <button onClick={function() { setFilter("all"); }} style={{ padding: "6px 12px", fontSize: 11, borderRadius: 5, cursor: "pointer", border: filter === "all" ? "1px solid " + B.green : "1px solid color-mix(in srgb, var(--b-accent) 15%, transparent)", background: filter === "all" ? "color-mix(in srgb, var(--b-accent) 20%, transparent)" : "transparent", color: filter === "all" ? B.greenLight : B.grayText, fontFamily: "'DM Sans', sans-serif", fontWeight: 600 }}>All ({log.length})</button>
+        <button onClick={function() { setFilter("all"); }} style={{ padding: "6px 12px", fontSize: 11, borderRadius: 5, cursor: "pointer", border: filter === "all" ? "1px solid " + B.green : "1px solid color-mix(in srgb, var(--b-accent) 15%, transparent)", background: filter === "all" ? "color-mix(in srgb, var(--b-accent) 20%, transparent)" : "transparent", color: filter === "all" ? B.greenLight : B.grayText, fontFamily: "inherit", fontWeight: 400 }}>All ({log.length})</button>
         {actionTypes.map(function(a) {
           var count = log.filter(function(e) { return e.action === a; }).length;
-          return <button key={a} onClick={function() { setFilter(a); }} style={{ padding: "6px 12px", fontSize: 11, borderRadius: 5, cursor: "pointer", border: filter === a ? "1px solid " + B.green : "1px solid color-mix(in srgb, var(--b-accent) 15%, transparent)", background: filter === a ? "color-mix(in srgb, var(--b-accent) 20%, transparent)" : "transparent", color: filter === a ? B.greenLight : B.grayText, fontFamily: "'DM Sans', sans-serif", fontWeight: 600 }}>{actionLabel(a)} ({count})</button>;
+          return <button key={a} onClick={function() { setFilter(a); }} style={{ padding: "6px 12px", fontSize: 11, borderRadius: 5, cursor: "pointer", border: filter === a ? "1px solid " + B.green : "1px solid color-mix(in srgb, var(--b-accent) 15%, transparent)", background: filter === a ? "color-mix(in srgb, var(--b-accent) 20%, transparent)" : "transparent", color: filter === a ? B.greenLight : B.grayText, fontFamily: "inherit", fontWeight: 400 }}>{actionLabel(a)} ({count})</button>;
         })}
       </div>
 
@@ -1926,7 +1927,7 @@ function ActivityLog() {
             <thead>
               <tr style={{ borderBottom: "2px solid " + B.green }}>
                 {["Time", "Prospect", "Source", "Action", "Detail"].map(function(h) {
-                  return <th key={h} style={{ textAlign: "left", padding: "8px 10px", color: B.grayMuted, fontWeight: 700, fontSize: 10, textTransform: "uppercase", letterSpacing: 1.5 }}>{h}</th>;
+                  return <th key={h} style={{ textAlign: "left", padding: "8px 10px", color: B.grayMuted, fontWeight: 400, fontSize: 10, textTransform: "uppercase", letterSpacing: 0.18 }}>{h}</th>;
                 })}
               </tr>
             </thead>
@@ -1936,15 +1937,15 @@ function ActivityLog() {
                   <tr key={e.id} style={{ borderBottom: "1px solid " + B.grayBorder }}>
                     <td style={{ padding: "8px 10px", color: B.grayText, whiteSpace: "nowrap", fontSize: 11 }}>{new Date(e.ts).toLocaleString()}</td>
                     <td style={{ padding: "8px 10px" }}>
-                      <div style={{ color: B.white, fontWeight: 600, fontSize: 12 }}>{e.name}</div>
+                      <div style={{ color: B.white, fontWeight: 400, fontSize: 12 }}>{e.name}</div>
                       <div style={{ color: B.grayMuted, fontSize: 10 }}>{e.email}{e.phone ? " · " + e.phone : ""}</div>
                     </td>
                     <td style={{ padding: "8px 10px" }}>
-                      <span style={{ fontSize: 11, color: (e.utm_source && e.utm_source !== "direct") ? B.greenLight : B.grayMuted, fontWeight: 600 }}>{e.utm_source || "direct"}</span>
+                      <span style={{ fontSize: 11, color: (e.utm_source && e.utm_source !== "direct") ? B.greenLight : B.grayMuted, fontWeight: 400 }}>{e.utm_source || "direct"}</span>
                       {e.utm_campaign && <div style={{ fontSize: 9, color: B.grayMuted }}>{e.utm_campaign}</div>}
                     </td>
                     <td style={{ padding: "8px 10px" }}>
-                      <span style={{ display: "inline-block", padding: "3px 8px", borderRadius: 4, fontSize: 10, fontWeight: 700, background: intentColor(e.action) + "18", color: intentColor(e.action) }}>{actionLabel(e.action)}</span>
+                      <span style={{ display: "inline-block", padding: "3px 8px", borderRadius: 4, fontSize: 10, fontWeight: 400, background: intentColor(e.action) + "18", color: intentColor(e.action) }}>{actionLabel(e.action)}</span>
                     </td>
                     <td style={{ padding: "8px 10px", color: B.grayText, fontSize: 11, maxWidth: 300, overflow: "hidden", textOverflow: "ellipsis" }}>{e.detail}</td>
                   </tr>
@@ -1956,6 +1957,18 @@ function ActivityLog() {
         </div>
       )}
     </div>
+  );
+}
+
+// The flip & BRRRR expense ledger is a standalone app in
+// public/expense-tracker; its data stays in this browser's localStorage.
+function ExpenseTracker() {
+  return (
+    <iframe
+      src="/expense-tracker/index.html"
+      title="Expense Tracker"
+      style={{ display: "block", width: "100%", height: "min(900px, calc(100vh - 140px))", minHeight: 560, border: "1px solid " + B.grayBorder, borderRadius: 8, background: "#f6f9fc" }}
+    />
   );
 }
 
@@ -2007,7 +2020,7 @@ export default function App() {
     return function() { window.removeEventListener("scroll", onScroll); };
   }, [isLoaded]);
 
-  if (!isLoaded) return (<div style={{ minHeight: "100vh", display: "flex", alignItems: "center", justifyContent: "center", background: B.navyDeep, fontFamily: "'DM Sans', sans-serif" }}><div className="scale-in" style={{ display: "flex", alignItems: "center", gap: 10, color: B.grayMuted, fontSize: 14 }}><span className="live-dot" /> Loading your workspace…</div></div>);
+  if (!isLoaded) return (<div style={{ minHeight: "100vh", display: "flex", alignItems: "center", justifyContent: "center", background: B.navyDeep, fontFamily: "inherit" }}><div className="scale-in" style={{ display: "flex", alignItems: "center", gap: 10, color: B.grayMuted, fontSize: 14 }}><span className="live-dot" /> Loading your workspace…</div></div>);
 
   var tabsList = [
     { key: "analyzer", label: "Deal Analyzer", icon: "chart" },
@@ -2015,6 +2028,7 @@ export default function App() {
     { key: "equity", label: "Equity", icon: "coin" },
     { key: "portfolio", label: "Portfolio", icon: "folder" },
     { key: "compare", label: "Compare", icon: "scale" },
+    { key: "expenses", label: "Expenses", icon: "receipt" },
   ];
   if (isAdmin) tabsList.push({ key: "activity", label: "Activity Log", icon: "list" });
 
@@ -2034,78 +2048,80 @@ export default function App() {
     equity: "Track equity, cashflow, and refinance or HELOC options on what you own.",
     portfolio: "Everything you've saved, rolled up into one view.",
     compare: "Put two saved analyses head-to-head.",
+    expenses: "Log rehab spend as it happens and track every flip and BRRRR against budget.",
     activity: "Prospect engagement and attribution.",
   };
 
   return (
-    <div style={{ position: "relative", minHeight: "100vh", fontFamily: "'DM Sans', sans-serif", background: B.navyDeep, color: B.white }}>
+    <div style={{ position: "relative", minHeight: "100vh", fontFamily: "inherit", background: B.navyDeep, color: B.white }}>
       <div className="ambient" aria-hidden="true"><div className="orb orb-1" /><div className="orb orb-2" /><div className="orb orb-3" /></div>
       <div style={{ position: "relative", zIndex: 1 }}>
         <header ref={headerRef} className="app-header">
-          <div style={{ maxWidth: 1160, margin: "0 auto", padding: "12px 20px 0", display: "flex", alignItems: "center", justifyContent: "space-between", gap: 12 }}>
+          <div style={{ maxWidth: 1440, margin: "0 auto", padding: "14px clamp(16px, 4.5vw, 64px) 0", display: "flex", alignItems: "center", justifyContent: "space-between", gap: 12 }}>
             <div style={{ display: "flex", alignItems: "center", gap: 12, minWidth: 0 }}>
-              <div style={{ padding: 6, borderRadius: 10, background: B.navyLight, border: "1px solid " + B.grayBorder, boxShadow: "var(--b-shadow-sm)" }}><EmpireLogo size={26} /></div>
+              <div style={{ padding: 6, borderRadius: 6, background: "#0c0a08", border: "1px solid " + B.grayBorder }}><EmpireLogo size={26} /></div>
               <div style={{ minWidth: 0 }}>
-                <div style={{ fontSize: 15, fontWeight: 800, letterSpacing: -0.3, lineHeight: 1.1, whiteSpace: "nowrap" }}>Capital Region Investor Hub</div>
-                <div style={{ fontSize: 10, letterSpacing: 2, textTransform: "uppercase", color: B.greenLight, fontWeight: 700, marginTop: 2 }}>Empire Real Estate Firm</div>
+                <div style={{ fontSize: 15, fontWeight: 400, letterSpacing: -0.01, lineHeight: 1.1, whiteSpace: "nowrap" }}>Capital Region Investor Hub</div>
+                <div style={{ fontSize: 10, letterSpacing: 0.18, textTransform: "uppercase", color: B.greenLight, fontWeight: 400, marginTop: 2 }}>Empire Real Estate Firm</div>
               </div>
             </div>
             <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
-              <div className="hide-sm" style={{ textAlign: "right", marginRight: 4 }}><div style={{ fontSize: 12, color: B.white, fontWeight: 700 }}>Ethan Harris</div><div style={{ fontSize: 10.5, color: B.grayMuted }}>Real Estate Salesperson · (518) 588-1122</div></div>
+              <div className="hide-sm" style={{ textAlign: "right", marginRight: 4 }}><div style={{ fontSize: 12, color: B.white, fontWeight: 400 }}>Ethan Harris</div><div style={{ fontSize: 10.5, color: B.grayMuted }}>Real Estate Salesperson · (518) 588-1122</div></div>
               {isStaff && (
-                <Link href="/advertise" className="btn btn-ghost" style={{ padding: "7px 12px", fontSize: 12, fontWeight: 700, textDecoration: "none", color: B.greenLight }}>
+                <Link href="/advertise" className="btn btn-ghost" style={{ padding: "7px 12px", fontSize: 12, fontWeight: 400, textDecoration: "none", color: B.greenLight }}>
                   <Icon name="video" size={14} /><span className="hide-sm">Studio</span>
                 </Link>
               )}
               <ThemeToggle theme={theme} onChange={setTheme} />
               <SignOutButton>
-                <button className="btn btn-ghost" title="Sign out" style={{ padding: "7px 12px", fontSize: 12, fontWeight: 600 }}><Icon name="logout" size={14} /><span className="hide-sm">Sign Out</span></button>
+                <button className="btn btn-ghost" title="Sign out" style={{ padding: "7px 12px", fontSize: 12, fontWeight: 400 }}><Icon name="logout" size={14} /><span className="hide-sm">Sign Out</span></button>
               </SignOutButton>
             </div>
           </div>
-          <nav className="nav-scroll" style={{ maxWidth: 1160, margin: "0 auto", padding: "12px 20px 12px" }}>
-            <Segmented size="lg" value={tab} onChange={handleTabChange} options={tabsList} />
+          <nav className="nav-scroll" style={{ maxWidth: 1440, margin: "0 auto", padding: "4px clamp(16px, 4.5vw, 64px) 0" }}>
+            <Segmented size="lg" variant="underline" value={tab} onChange={handleTabChange} options={tabsList} />
           </nav>
         </header>
 
-        <main style={{ maxWidth: 1160, margin: "0 auto", padding: "26px 20px 10px" }}>
-          <section className="reveal" style={{ marginBottom: 22 }}>
-            <div style={{ display: "inline-flex", alignItems: "center", gap: 8, padding: "5px 11px", borderRadius: 999, background: B.navyLight, border: "1px solid " + B.grayBorder, fontSize: 11, fontWeight: 700, color: B.grayText, marginBottom: 12 }}>
-              <span className="live-dot" /> Capital District market data · {LAST_UPDATED}
+        <main style={{ maxWidth: 1440, margin: "0 auto", padding: "64px clamp(16px, 4.5vw, 64px) 16px" }}>
+          <section className="reveal" style={{ marginBottom: 48 }}>
+            <div style={{ display: "flex", alignItems: "center", gap: 8, fontSize: 10, lineHeight: "22px", letterSpacing: 0.18, textTransform: "uppercase", color: B.white, marginBottom: 24 }}>
+              Capital District market data:<span className="num" style={{ fontSize: 10, padding: "0 6px", borderRadius: 4, background: "var(--b-subtle)", border: "1px solid " + B.grayBorder }}>{LAST_UPDATED}</span>
             </div>
-            <h1 style={{ fontSize: "clamp(26px, 4vw, 38px)", fontWeight: 800, letterSpacing: -1.2, lineHeight: 1.08, margin: "0 0 8px" }}>
+            <h1 style={{ fontSize: "clamp(40px, 5vw, 64px)", fontWeight: 400, letterSpacing: "-0.01px", lineHeight: 1, margin: "0 0 16px" }}>
               {firstName ? <>Welcome back, <span className="shimmer-text">{firstName}</span></> : <span className="shimmer-text">Underwrite with confidence</span>}
             </h1>
-            <p key={tab} className="tab-panel" style={{ fontSize: 14.5, color: B.grayText, margin: 0, maxWidth: 620 }}>{tabMeta[tab]}</p>
+            <p key={tab} className="tab-panel" style={{ fontSize: 18, lineHeight: "24px", color: B.grayText, margin: 0, maxWidth: 620 }}>{tabMeta[tab]}</p>
           </section>
 
-          <section className="stat-row" style={{ gridTemplateColumns: "repeat(auto-fit, minmax(150px, 1fr))", marginBottom: 26 }}>
+          <section className="stat-row" style={{ gridTemplateColumns: "repeat(auto-fit, minmax(150px, 1fr))", marginBottom: 48 }}>
             {pulse.map(function(p, i) { return <StatCard key={p.label} label={p.label} value={p.value} i={i + 1} />; })}
           </section>
 
-          <div key={tab} className="tab-panel card" style={{ padding: "clamp(16px, 3vw, 28px)", boxShadow: "var(--b-shadow-md)" }}>
+          <div key={tab} className="tab-panel card" style={{ padding: "clamp(16px, 3vw, 32px)", background: B.navyLight }}>
             {tab === "analyzer" && <DealAnalyzer onTrack={handleTrack} />}
             {tab === "markets" && <MarketSnapshots onTrack={handleTrack} />}
             {tab === "equity" && <EquityEstimator onTrack={handleTrack} />}
             {tab === "portfolio" && <PortfolioDashboard onTrack={handleTrack} />}
             {tab === "compare" && <DealComparison onTrack={handleTrack} />}
+            {tab === "expenses" && <ExpenseTracker />}
             {tab === "activity" && isAdmin && <ActivityLog />}
           </div>
         </main>
 
-        <footer style={{ maxWidth: 1160, margin: "0 auto", padding: "30px 20px 28px" }}>
-          <div className="card reveal" style={{ padding: "22px 24px", display: "flex", alignItems: "center", justifyContent: "space-between", gap: 16, flexWrap: "wrap", background: "linear-gradient(135deg, color-mix(in srgb, var(--b-accent) 10%, var(--b-navy-light)), var(--b-navy-light))" }}>
+        <footer style={{ maxWidth: 1440, margin: "0 auto", padding: "64px clamp(16px, 4.5vw, 64px) 32px" }}>
+          <div className="card reveal" style={{ padding: "22px 24px", display: "flex", alignItems: "center", justifyContent: "space-between", gap: 16, flexWrap: "wrap", background: B.navy }}>
             <div>
-              <div style={{ fontSize: 18, fontWeight: 800, letterSpacing: -0.4 }}>Ready to make a move?</div>
+              <div style={{ fontSize: 18, fontWeight: 400, letterSpacing: -0.01 }}>Ready to make a move?</div>
               <div style={{ fontSize: 13, color: B.grayText, marginTop: 3 }}>Let&apos;s underwrite your next deal together. Ethan Harris · Empire Real Estate Firm</div>
             </div>
             <div style={{ display: "flex", gap: 8, flexWrap: "wrap" }}>
-              <a href="tel:+15185881122" className="btn btn-primary" style={{ padding: "9px 16px", fontSize: 13, fontWeight: 700, textDecoration: "none" }}><Icon name="phone" size={14} />(518) 588-1122</a>
-              <a href="mailto:Ethan@EmpireRealEstateFirm.com" className="btn btn-ghost" style={{ padding: "9px 16px", fontSize: 13, fontWeight: 700, textDecoration: "none" }}><Icon name="mail" size={14} />Email Ethan</a>
+              <a href="tel:+15185881122" className="btn btn-primary" style={{ padding: "9px 16px", fontSize: 13, fontWeight: 400, textDecoration: "none" }}><Icon name="phone" size={14} />(518) 588-1122</a>
+              <a href="mailto:Ethan@EmpireRealEstateFirm.com" className="btn btn-ghost" style={{ padding: "9px 16px", fontSize: 13, fontWeight: 400, textDecoration: "none" }}><Icon name="mail" size={14} />Email Ethan</a>
             </div>
           </div>
           <div style={{ fontSize: 9.5, color: B.grayMuted, lineHeight: 1.7, marginTop: 20, maxWidth: 820, marginLeft: "auto", marginRight: "auto", textAlign: "center" }}>
-            <strong style={{ color: B.grayText, fontWeight: 700 }}>Disclaimer:</strong> This tool and all analyses generated herein are financial models provided for informational and educational purposes only. Nothing on this site constitutes financial, legal, tax, or investment advice. All projections, estimates, and calculations — including but not limited to estimated property values, cap rates, cash-on-cash returns, cashflow projections, and appreciation forecasts — are hypothetical and are not guarantees or representations of actual or future performance. Estimated property values are based on a generalized appreciation formula and may not reflect actual market conditions; a professional appraisal or comparative market analysis (CMA) should be obtained before making any purchase or refinance decision. Market data is compiled from third-party sources believed to be reliable but is not warranted for accuracy or completeness. All figures are approximations and may change without notice. Past performance and historical trends are not indicative of future results. Real estate investing involves risk, including the potential loss of principal. You should consult with a licensed real estate attorney, certified public accountant (CPA), financial advisor, and/or mortgage professional before making any investment decision. Ethan Harris is a licensed real estate salesperson with Empire Real Estate Firm and is not a licensed financial advisor, attorney, or tax professional. By using this tool, you acknowledge that all investment decisions are made at your own risk.
+            <strong style={{ color: B.grayText, fontWeight: 400 }}>Disclaimer:</strong> This tool and all analyses generated herein are financial models provided for informational and educational purposes only. Nothing on this site constitutes financial, legal, tax, or investment advice. All projections, estimates, and calculations — including but not limited to estimated property values, cap rates, cash-on-cash returns, cashflow projections, and appreciation forecasts — are hypothetical and are not guarantees or representations of actual or future performance. Estimated property values are based on a generalized appreciation formula and may not reflect actual market conditions; a professional appraisal or comparative market analysis (CMA) should be obtained before making any purchase or refinance decision. Market data is compiled from third-party sources believed to be reliable but is not warranted for accuracy or completeness. All figures are approximations and may change without notice. Past performance and historical trends are not indicative of future results. Real estate investing involves risk, including the potential loss of principal. You should consult with a licensed real estate attorney, certified public accountant (CPA), financial advisor, and/or mortgage professional before making any investment decision. Ethan Harris is a licensed real estate salesperson with Empire Real Estate Firm and is not a licensed financial advisor, attorney, or tax professional. By using this tool, you acknowledge that all investment decisions are made at your own risk.
           </div>
         </footer>
       </div>
