@@ -1,5 +1,5 @@
 // All deal math lives here so every view reads from one set of numbers.
-import { sum, today, daysBetween, parseD, iso } from './util.js';
+import { sum, today, daysBetween, parseD, iso } from './util';
 
 const MONTH = 30.4375;
 
